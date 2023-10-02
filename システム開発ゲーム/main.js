@@ -1,11 +1,28 @@
 "use strict";
 
-const M_HEIGHT = 32;                      //モンスターチップの幅の半分
-const M_WIDTH = 32;                       //モンスターチップの高さの半分
+const M_HEIGHT = 32;                      //モンスターチップの幅
+const M_WIDTH = 32;                       //モンスターチップの高さ
 
-const FONT = "36px sans-serif";           //使用フォント
+
+var FONT = "36px sans-serif";           //使用フォント
+
+const customFont = new FontFace(
+    'CustomFont', // フォントファミリー名
+    `url(font/PixelMplus12-Regular.ttf)`, // フォントファイルへの相対パス
+);
+
+customFont.load().then(function(loadedFont) {
+    document.fonts.add(loadedFont);
+})
+
+customFont.loaded.then(function() {
+    FONT = '36px CustomFont'; // フォントファミリー名を設定
+    // ここでフォントのスタイルを適用する他の部分のコードを追加
+})
+
+
 const FONTSTYLE     = "#ffffff";          //文字色
-const INTERVAL      = 33;                 //フレーム呼び出し感覚
+const INTERVAL      = 66;                 //フレーム呼び出し感覚
 const gFileMonster  = "img/mob_icon.png"           //画像。テスト
 const HEIGHT        = 1000;                //仮想画面サイズ、高さ
 const WIDTH         = 1000;                //仮想画面サイズ、幅
@@ -13,6 +30,8 @@ const START_HP      = 20;                  //モンスターの開始時のHP
 const ATK           = 5;                   //モンスターの攻撃力
 const DFE           = 5;                   //モンスターの防御力
 const AGI           = 5;                   //モンスターの素早
+const Start_placeX = Math.floor(WIDTH/ 4.8);     //モンスターの開始縦位置 
+const Start_placeY = Math.floor(HEIGHT / 8);     //モンスターの開始横位置
 
 const MWNDSTYLE     = "rgba(203,244,255,1)"  //モンスターウインドウの色
 const WNDSTYLE      = "rgba(0,0,0,0.75)"  //ウインドウの色
@@ -52,6 +71,10 @@ let mPhase = 0;                                //モンスター育成画面の�
 let bPhase = 0;                                //戦闘画面のフェーズ
 let day = 1;                                   //育成画面での経過日数
 
+let now_placeX = Start_placeX;                 //現在のモンスターの縦位置
+let now_placeY = Start_placeY;                 //現在のモンスターの横位置 
+let randomX = null;                            //モンスターを動かす縦位置
+let randomY = null;                            //モンスターを動かす横位置
 var loopshop = 0;
 
 
@@ -206,6 +229,11 @@ function Shop()
     }
 }
 
+function ItemCheck(g){
+    ResetWND(g);
+    g.fillStyle = WNDSTYLE;
+    g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);;
+}
 
 function Drawgrowth(gCursorX)
 {
@@ -244,11 +272,47 @@ function RandomUp()
    return random <= 1 ? '1' : random <= 25 ? '2' : random <= 98 ? '3' : '4';
 }
 
+function moovMonster(){
+    if(randomX != null && randomY != null){
+    if(now_placeX < randomX){
+        now_placeX += 1;
+    }else if(now_placeX > randomX){
+        now_placeX -= 1;
+    if(now_placeY < randomY){
+        now_placeY += 1;
+    }else if(now_placeY > randomY){
+        now_placeY -= 1;
+    }
+    }
+}}
+function DrawMonster(g){
+
+        g.drawImage(gImgMonster,Monster_number-1,0, M_WIDTH , M_HEIGHT 
+        ,now_placeX ,now_placeY,
+        WIDTH/3,HEIGHT/3);
+        moovMonster();
+        
+        g.fillStyle = WNDSTYLE;                             // ウインドウの色
+        g.fillRect(WIDTH/80,HEIGHT/80,WIDTH/7,65);          //日数を表記するウインドウ
+    
+        g.fillRect(now_placeX + WIDTH / 39 ,now_placeY-WIDTH/200,WIDTH/3.5,HEIGHT/45); //ライフバー（黒）を表記するウインドウ
+    
+        g.font = FONT;  // 文字フォントを設定
+        g.fillStyle = FONTSTYLE                         // 文字色を設定
+        g.fillText(day + "日目",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
+    
+        DrawLife(0);
+    
+        g.fillStyle = "rgba(255,30,30,1)";
+        g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
+    
+}
+
 //モンスターのライフバーを描画する関数
-function DrawLife(moov)
+function DrawLife(L_moov)
 {
 
-    life = life + moov;
+    life = life + L_moov;
     if(life >= 100){
         life = 100;
     }
@@ -269,26 +333,12 @@ function DrawHome(g)
 	g.fillRect( 0, 0, WIDTH, HEIGHT );
  
     g.fillStyle = MWNDSTYLE;
-    g.fillRect(0,0,WIDTH - WIDTH /3.9,HEIGHT/1.52);
+    g.fillRect(0,0,WIDTH - WIDTH /3.9,HEIGHT/1.52);     //モンスターウインドウ
 
+    DrawMonster(g);
+    console.log("x:"+randomX,"y:"+randomY);
 
-    g.drawImage(gImgMonster,Monster_number-1,0, M_WIDTH , M_HEIGHT ,Math.floor(WIDTH/ 4.8) ,Math.floor(HEIGHT / 8),WIDTH/3,HEIGHT/3);
-
-    g.fillStyle = WNDSTYLE;         // ウインドウの色
-    g.fillRect(WIDTH/80,HEIGHT/80,WIDTH/7,65);
-
-    g.fillRect(WIDTH/4.3,HEIGHT/7,WIDTH/3.5,HEIGHT/45);
-
-    g.font = FONT;  // 文字フォントを設定
-    g.fillStyle = FONTSTYLE                         // 文字色を設定
-    g.fillText(day + "日目",WIDTH/27,HEIGHT / 18)
-
-    DrawLife(0);
-
-    g.fillStyle = "rgba(255,30,30,1)";
-    g.fillRect(WIDTH/4.25,HEIGHT/6.9,(WIDTH/3.55)/100 * life,HEIGHT/53);
-
-
+   
     DrawStatus(g);
     DrawG(g);
 
@@ -315,8 +365,8 @@ function DrawHome(g)
         DrawMenu(g);
     }
     if(mPhase == 5){
+        ItemCheck(g);
         console.log("アイテム確認");
-        mPhase = 0;
     }
     if(mPhase == 9){
         if(life != 100){
@@ -389,6 +439,12 @@ function WmTimer()
     WmPaint();
 }
 
+const M_moov = function(){
+    randomX = Math.floor(Math.random() * ((WIDTH - WIDTH /3.9) - WIDTH/3 - 0 + 1)) + 0;
+    randomY = Math.floor(Math.random() * ((HEIGHT/1.52 - 0 + 1) - HEIGHT/3 + 0));
+
+    //now_placeX = randomX; now_placeY = randomY; 
+}
 
 window.onkeydown = function (ev) {
     let c = ev.keyCode;     // キーコード取得
@@ -471,6 +527,12 @@ window.onkeyup = function (ev) {
             gCursorX = 0;
             gCursorY = 0;
         }
+        else if(mPhase == 5){
+            mPhase = 51;
+        }else if(mPhase = 51){
+            mPhase = 0;
+        }
+
     }
 }
 
@@ -488,4 +550,5 @@ window.onload = function ()
     WmSize();
     window.addEventListener("resize", function () { WmSize() }); // ブラウザサイズ変更時、WmSize()が呼ばれるよう指示
     setInterval(function () { WmTimer() }, INTERVAL);   
+    setInterval(M_moov, 6000);
 }
