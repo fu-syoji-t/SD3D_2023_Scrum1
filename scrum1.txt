@@ -1,0 +1,57 @@
+CREATE TABLE `user`(
+`user_id` int(11)       AUTO_INCREMENT PRIMARY KEY,
+`mail`	  varchar(191)  NOT NULL,
+`pass`    varchar(191)  NOT NULL,
+`name`	  varchar(20)   NOT NULL
+);
+
+
+CREATE TABLE `my_monster`(
+`play_id`    int(11) NOT NULL, 
+`user_id`    int(11) NOT NULL,
+`monster_id` int(11) NOT NULL,
+`day`	     int(4)  NOT NULL,
+`life`       int(4)  NOT NULL,
+`hp`	     int(4)  NOT NULL,
+`atk`	     int(4)  NOT NULL,
+`def`	     int(4)  NOT NULL,
+`agi`	     int(4)  NOT NULL,
+PRIMARY KEY (play_id, user_id),
+FOREIGN KEY (user_id)	 REFERENCES user(user_id),
+FOREIGN KEY (monster_id) REFERENCES default_monster(monster_id)
+);
+
+CREATE TABLE `my_item`(
+`play_id`     int(11) NOT NULL,
+`user_id`     int(11) NOT NULL,
+`item_id`     int(11) NOT NULL,
+`item_number` int(4)  NOT NULL,
+
+PRIMARY KEY (play_id, user_id, item_id),     
+FOREIGN KEY (play_id) REFERENCES my_monster(play_id),
+FOREIGN KEY (user_id) REFERENCES user(user_id),
+FOREIGN KEY (item_id) REFERENCES item(item_id)
+);
+
+CREATE TABLE `default_monster`(
+`monster_id`   int(11) NOT NULL PRIMARY KEY,
+`need_hp`      int(4),
+`need_atk`     int(4),
+`need_def`     int(4),
+`need_agi`     int(4),
+`need_item_id` int(11), 
+`correction_hp`     int(4)  NOT NULL,
+`correction_atk`     int(4)  NOT NULL,
+`correction_def`     int(4)  NOT NULL,
+`correction_agi`     int(4)  NOT NULL,
+`monster_text`	     varchar(191) NOT NULL,
+`monster_image`	     varchar(255) NOT NULL
+);
+
+CREATE TABLE `item`(
+`item_id`	int(11) NOT NULL PRIMARY KEY,
+`item_name`	varchar(191) NOT NULL,
+`item_effect`	varchar(191) NOT NULL,
+`item_price`	int(11) NOT NULL,
+`item_text`	varchar(191) NOT NULL
+);
