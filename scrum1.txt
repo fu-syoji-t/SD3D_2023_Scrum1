@@ -5,11 +5,54 @@ CREATE TABLE `user`(
 `name`	  varchar(20)   NOT NULL
 );
 
+INSERT INTO user (`mail`, `pass`, `name`)
+VALUES
+  ('monster@friends.jp' , 'monsterfriends', 'scrum1');
+
+
+
+CREATE TABLE `default_monster`(
+`monster_id`   int(11) NOT NULL PRIMARY KEY,
+`monster_name` varchar(191)NOT NULL,
+`need_hp`      int(4),
+`need_atk`     int(4),
+`need_def`     int(4),
+`need_agi`     int(4),
+`need_item_id` int(11), 
+`correction_hp`      int(4)  NOT NULL,
+`correction_atk`     int(4)  NOT NULL,
+`correction_def`     int(4)  NOT NULL,
+`correction_agi`     int(4)  NOT NULL,
+`monster_text`	     varchar(191) NOT NULL,
+`monster_image`	     varchar(255) NOT NULL
+);
+
+INSERT INTO `default_monster` (`monster_id`, `monster_name`, `need_hp`, `need_atk`, `need_def`, `need_agi`, `need_item_id`, `correction_hp`, `correction_atk`, `correction_def`, `correction_agi`, `monster_text`, `monster_image`)
+VALUES ('1', 'スライム君', NULL, NULL, NULL, NULL, NULL, '0', '0', '0', '0', 'どんなモンスターにでもなれるスライム', 'mob_icon.png');
+
+
+CREATE TABLE `item`(
+`item_id`	int(11) NOT NULL PRIMARY KEY,
+`item_name`	varchar(191) NOT NULL,
+`item_effect`	varchar(191) NOT NULL,
+`item_price`	int(11) NOT NULL,
+`item_text`	varchar(191) NOT NULL
+);
+
+INSERT INTO item (`item_id`, `item_name`, `item_effect`, `item_price`, `item_text`)
+VALUES
+  (1, '薬草',       'life += 30' , 200, '体力が30回複する'),
+  (2, '中薬草',     'life += 60' , 400, '体力が60回復する'),
+  (3, '上薬草',     'life += 100', 800, '体力が100回複する'),
+  (4, 'スライム餅', 'life =  0'  ,   0, '体力が0になる');
+
+
 
 CREATE TABLE `my_monster`(
 `play_id`    int(11) NOT NULL, 
 `user_id`    int(11) NOT NULL,
 `monster_id` int(11) NOT NULL,
+`my_gold`    int(8)  NOT NULL,
 `day`	     int(4)  NOT NULL,
 `life`       int(4)  NOT NULL,
 `hp`	     int(4)  NOT NULL,
@@ -21,6 +64,9 @@ FOREIGN KEY (user_id)	 REFERENCES user(user_id),
 FOREIGN KEY (monster_id) REFERENCES default_monster(monster_id)
 );
 
+INSERT INTO `my_monster` (`play_id`, `user_id`, `monster_id`, `my_gold`, `day`, `life`, `hp`, `atk`, `def`, `agi`) VALUES ('1', '1', '1', '10000', '1', '100', '20', '5', '5', '5');
+
+
 CREATE TABLE `my_item`(
 `play_id`     int(11) NOT NULL,
 `user_id`     int(11) NOT NULL,
@@ -31,27 +77,4 @@ PRIMARY KEY (play_id, user_id, item_id),
 FOREIGN KEY (play_id) REFERENCES my_monster(play_id),
 FOREIGN KEY (user_id) REFERENCES user(user_id),
 FOREIGN KEY (item_id) REFERENCES item(item_id)
-);
-
-CREATE TABLE `default_monster`(
-`monster_id`   int(11) NOT NULL PRIMARY KEY,
-`need_hp`      int(4),
-`need_atk`     int(4),
-`need_def`     int(4),
-`need_agi`     int(4),
-`need_item_id` int(11), 
-`correction_hp`     int(4)  NOT NULL,
-`correction_atk`     int(4)  NOT NULL,
-`correction_def`     int(4)  NOT NULL,
-`correction_agi`     int(4)  NOT NULL,
-`monster_text`	     varchar(191) NOT NULL,
-`monster_image`	     varchar(255) NOT NULL
-);
-
-CREATE TABLE `item`(
-`item_id`	int(11) NOT NULL PRIMARY KEY,
-`item_name`	varchar(191) NOT NULL,
-`item_effect`	varchar(191) NOT NULL,
-`item_price`	int(11) NOT NULL,
-`item_text`	varchar(191) NOT NULL
 );
