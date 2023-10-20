@@ -1,5 +1,9 @@
 "use strict";
 
+const ca = document.getElementById("main");// mainキャンバスの要素を取得
+const g = ca.getContext("2d");             // 2D描画コンテキストを取得
+
+
 
 const M_HEIGHT = 32;                      //モンスターチップの幅
 const M_WIDTH = 31;                       //モンスターチップの高さ
@@ -18,7 +22,7 @@ customFont.load().then(function(loadedFont) {
 })
 
 customFont.loaded.then(function() {
-    FONT = '36px CustomFont'; // フォントファミリー名を設定
+    FONT = '33px CustomFont'; // フォントファミリー名を設定
     // ここでフォントのスタイルを適用する他の部分のコードを追加
 })
 //---------------------------------------------------------
@@ -39,27 +43,10 @@ const MWNDSTYLE     = "rgba(203,244,255,1)"        //モンスターウインド
 const WNDSTYLE      = "rgba(0,0,0,0.75)"           //ウインドウの色
 
 
-const SelectMenu = [/*"今日は何をしますか？",*/"鍛える","働く","休む","買い物","アイテム"];
+const SelectMenu   = [/*"今日は何をしますか？",*/"鍛える","働く","休む","買い物","アイテム","セーブ"];
 const TrainingMenu = [/*"何を鍛えますか？",*/"体力","力","守り","速さ","やめる"];
+const SaveMenu     = ["はい","いいえ"];
 
-const ShopMenu = {/*null:null,*/"薬草": 200,"中薬草": 400,"上薬草": 800,"スライム餅": 0};
-
-const Item_Text = ["体力が30回復する","体力が60回復する","体力が100回復する","体力を０にする"]
-const MyItem = {"薬草":5,"中薬草":1,"上薬草":1,"スライム餅":1};     //所持アイテム
-                                      //所持しているアイテムのみを抽出する配列
-
-const ItemEffect_list = {0:30,0:60,0:100,1:null};
-const ItemEffect = [
-    function add(a) {
-        return life + a;
-    },
-    function subtract(a) {
-        return life = 0;
-    },
-];
-
-
-const menuItems = Object.keys(ShopMenu);
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
 
 
@@ -68,10 +55,6 @@ const button_se = new Audio('SE/音人ボタン音47.mp3');   //ボタンを押�
 
 
 let isAudioPlaying = false;                             //SEが再生中かどうかを判定する
-
-let life = 100                                 //モンスターのスタミナ
-
-let MyG = 100000;                                 //所持ゴールド
 
 let gMessage1 = null;
 let gMessage2 = null;
@@ -89,40 +72,75 @@ let gScreen;                                   //仮想画面
 let gIsKeyDown = {};                           //キーが押されているかどうかを示すオブジェクト
 let mPhase = 0;                                //モンスター育成画面のフェーズ
 let bPhase = 0;                                //戦闘画面のフェーズ
-let day = 1;                                   //育成画面での経過日数
 
 let now_placeX = Start_placeX;                 //現在のモンスターの縦位置
 let now_placeY = Start_placeY;                 //現在のモンスターの横位置 
 let randomX = null;                            //モンスターを動かす縦位置
 let randomY = null;                            //モンスターを動かす横位置
 
-import{play_data} from './db.js';
-play_data()
-    .then(function(data) {
-        // データを処理
-        console.log(data)
+import{load_data,save_item,save_state} from './db.js';
 
-        SetState(data);
-    });
-    
-function SetState(data){
+const shared ={};
 
+
+async function play_data(){
+
+    const state  =  await  load_data("state");    
+    const item   =  await  load_data("item");
+    const myitem =  await  load_data("myitem");
+
+    shared.state = Setdata(state,);
+    shared.item = Setdata(item);
+    shared.myitem = Setdata(myitem);
+}
+
+function Setdata(data){
+
+    if(data !== null && data !== undefined){
     for (var i = 0; i < data.length; i++) {
         for (var key in data[i]) {
             if (!isNaN(data[i][key])) {
                 data[i][key] = parseInt(data[i][key]);
             }
         }
+        
     }
+}else(
+    data = []
+)
 
-    console.log(data)
+return data;
+}
 
-    let gMHP = data[0].hp;
-    let gATK = data[0].atk;
-    let gDFE = data[0].def;
-    let gAGI = data[0].agi;
 
-    let state = [ gMHP,gATK,gDFE,gAGI];
+async function updata_item(){
+    if (shared.myitem.length > 0){
+    for(const myitem of shared.myitem){
+        console.log(myitem.item_name);
+    save_item(myitem.item_id,myitem.item_number);
+    }
+}
+}
+async function updata_state(){
+    console.log("id"+shared.state[0].monster_id
+    +"gold"+ shared.state[0].my_gold
+    +"day"+ shared.state[0].day
+    +"life"+shared.state[0].life
+    +"hp"+shared.state[0].hp
+    +"atk"+shared.state[0].atk
+    +"def"+shared.state[0].def
+    +"agi"+shared.state[0].agi);
+
+    save_state(shared.state[0].monster_id,
+               shared.state[0].my_gold,
+               shared.state[0].day,
+               shared.state[0].life,
+               shared.state[0].hp,
+               shared.state[0].atk,
+               shared.state[0].def,
+               shared.state[0].agi,
+    )
+}
 
 
 //画像の読み込みを行う関数
@@ -140,18 +158,14 @@ function GetMenu(){
     }else if(mPhase == 1){
         Cm = TrainingMenu;  Cx = 4; Cy = 2;
     }else if(mPhase == 4){
-        Cm = ShopMenu;      Cx = 2; Cy = 2;
+        Cm = shared.item;   Cx = 2; Cy = 2;
     }else if(mPhase == 5){
-        let count = 0
-        for (const itemName in MyItem) {
-            if (MyItem[itemName] !== 0) {
-                count++;
-            }
-        }
-        console.log("a"+count);
-        var length = Math.floor(count / 2);
-        console.log("b"+length);
-        Cm = MyItem;      Cx = 2; Cy = length;
+        Cm = shared.myitem; Cx = 2;
+
+        var mi_length = shared.myitem.length;
+        Cy = Math.floor(mi_length / 2);
+    }else if(mPhase == 6){
+        Cm = SaveMenu;      Cx = 2; Cy = 1;
     }
     return {
         Cm,Cx,Cy
@@ -164,14 +178,14 @@ function DrawStatus(g)
 {
     g.fillStyle = WNDSTYLE;         // ウインドウの色
     g.fillRect(WIDTH - WIDTH/4, HEIGHT/8, WIDTH/4.1, HEIGHT/2.8);     // 短形描画
-    
+
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
 
-    g.fillText("体力:"+ state[0], WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
-    g.fillText("　力:" + state[1], WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
-    g.fillText("守り:" + state[2], WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
-    g.fillText("速さ:" + state[3], WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
+    g.fillText("体力:" + shared.state[0].hp, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
+    g.fillText("　力:" + shared.state[0].atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
+    g.fillText("守り:" + shared.state[0].def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
+    g.fillText("速さ:" + shared.state[0].agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
 }
 
 
@@ -185,7 +199,7 @@ function DrawG(g)
     g.fillStyle = FONTSTYLE                         // 文字色を設定  
 
     g.fillText("所持ゴールド", WIDTH - WIDTH/4.2, HEIGHT/1.8);        
-    g.fillText(MyG + "G", WIDTH - WIDTH/4.2, HEIGHT/1.6);           // 所持ゴールドを表示するテキスト
+    g.fillText(shared.state[0].my_gold + "G", WIDTH - WIDTH/4.2, HEIGHT/1.6);           // 所持ゴールドを表示するテキスト
 }
 
 //新しいテキストを入力する前にウインドウをリセットする関数
@@ -208,7 +222,7 @@ function Drawwork(g)
 
     //g.fillText("モンスターと一緒に働いて"+PlusG+"G手に入れた！！" , WIDTH/28,HEIGHT / 1.32);
 
-    MyG += PlusG;
+    shared.state[0].my_gold += PlusG;
 
     mPhase = 0;
     gCursorX = 0;
@@ -245,19 +259,21 @@ g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT /
 
 function ItemText(g){
 
-    const key = Object.keys(ShopMenu);
-    const NCursor = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX
-    const now_item = key[NCursor];
-    const Item_description = Item_Text[NCursor]
+    const NCursor = (gCursorY == 0) ? gCursorX+1 :gCursorY+2 * 2 -3 + gCursorX+1;
+    console.log(NCursor);
 
+        
+    ResetWND(g);
 
     if(mPhase == 4){
-        SetText(g,"何を購入しますか？",now_item,Item_description)
+        SetText(g,"何を購入しますか？",shared.item[NCursor-1].item_name,shared.item[NCursor-1].item_text)
     }else if(mPhase == 5){
-
-        SetText(g,"どのアイテムを使いますか？",now_item,Item_description)
+        if(shared.myitem.length > 0){
+            SetText(g,"どのアイテムを使いますか？",shared.myitem[NCursor-1].item_name,shared.myitem[NCursor-1].item_text);
+        }else{
+            SetText(g,"アイテムを持っていなかった！","お店にアイテムを買いに行こう！",""); 
     }
-    console.log(mPhase);
+}
 }
 
 function DrawShopMenu(g){
@@ -275,22 +291,18 @@ function DrawShopMenu(g){
     //let First = true;
     let x = 0;
     let y = 0;
-    Object.keys(ShopMenu).forEach(function(productName) {
-        /*if (First) {
-            First = false; // 最初の要素をスキップ
-            return; // continueのように処理をスキップして次の要素へ
-        }
-        */
-
-        const price = ShopMenu[productName]; // 二つ目の要素（価格）を取得
-        g.fillText(`　${productName}:${price}G`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
+    let z = 0;
+    shared.item.forEach(function(item){
+        const name = item.item_name; // 二つ目の要素（価格）を取得
+        const price = item.item_price
+        g.fillText(`　${name}:${price}G`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
         
         x = x + 1;
         if (x >= Menu.Cx) {
             x = 0;
             y++;
         }
-    });       
+    });
     g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
 }
 
@@ -302,14 +314,45 @@ function Shop()
 
     console.log(buy_Item)
 
-        const selectedItem = menuItems[buy_Item];
-        const price = ShopMenu[selectedItem];; // 項目の価格を取得
-        console.log("商品名："+selectedItem+"　値段："+price)
-        if(MyG >= price){
-        MyItem[selectedItem]++;
-        MyG -= price;
+    const selectedItem = shared.item[buy_Item].item_name;
+    const price        = shared.item[buy_Item].item_price;
+
+        console.log("商品名："+ selectedItem +"　値段："+price)
+        if(shared.state[0].my_gold >= price){
+        //updata_item(shared.item[buy_Item].item_id,1);
+        
+        var id = 0
+        if (shared.myitem.length > 0){
+            console.log("a");    
+        for(var i=0; shared.myitem.length > i; i++){
+            console.log("i="+i+":length="+shared.item.length);
+            
+        if(shared.myitem[i].item_id == shared.item[buy_Item].item_id){
+            shared.myitem[i].item_number++,
+            id++;
+
+            break;
+        }
+        console.log("b");
+    }
+}           
+    if(id === 0){
+        shared.myitem.push(
+            {  
+                item_id      : shared.item[buy_Item].item_id,
+                item_number  : 1,
+                item_name    : shared.item[buy_Item].item_name,
+                item_effect  : shared.item[buy_Item].item_effect,
+                item_price   : shared.item[buy_Item].item_price,
+                item_text    : shared.item[buy_Item].item_text  
+            })
+    }
+    console.log(shared.myitem);
+    shared.state[0].my_gold -= price;
+        
     }
 }
+
 
 
 //アイテムを確認する項目を描画する関数
@@ -320,7 +363,7 @@ function ItemCheck(g){
 
     let x = 0;
     let y = 0;
-    let length = 0;
+
     ItemText(g);
 
     g.font = FONT;  // 文字フォントを設定
@@ -328,49 +371,42 @@ function ItemCheck(g){
 
     let Menu = GetMenu();
 
-    Object.keys(Menu.Cm).forEach(function(productName) {
 
-        const possessions = MyItem[productName]; // 二つ目の要素（価格）を取得
 
-        if(possessions != 0){
-        g.fillText(`　${productName}:${possessions}個`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
-        }
+    shared.myitem.forEach(function(myitem){
+
+        g.fillText(`　${myitem.item_name}:${myitem.item_number}個`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
 
         x = x + 1;
         if (x >= Menu.Cx) {
             x = 0;
             y++;
         }
-    });
 
     g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
 
+})
 }
-
 
 function Use_Item(){
-    /*const MyItem = {"薬草":5,"中薬草":1,"上薬草":1,"スライム餅":1}; 
-    const ItemEffect_list = {0:30,0:60,0:100,1:null};
-    const ItemEffect = [
-        function add(a) {
-            return life + a;
-        },
-        function subtract(a) {
-            return life = 0;
-        },
-    ];*/
+    let Select_Item = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX;
+    console.log(Select_Item);
+    console.log(shared.myitem[Select_Item].item_name);
+    console.log(shared.myitem[Select_Item].item_effect);
+    console.log(shared.state[0].life);
+    shared.myitem[Select_Item].item_number--;
 
-    const select_Item = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX
-    ;
-
-    var length = Object.keys(MyItem).length
+    const item_result = eval(shared.myitem[Select_Item].item_effect);
 
 
+    console.log(shared.state[0].life);
+
+    if(shared.myitem[Select_Item].item_number <= 0){
+        shared.myitem.splice(Select_Item, 1);
+    }
 }
 
-
 function SetText(g,M1,M2,M3){
-    ResetWND(g);
 
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
@@ -383,12 +419,17 @@ function SetText(g,M1,M2,M3){
 
 
 //モンスターを鍛えた際、成長値を決定する関数
-function Drawgrowth(gCursorX)
+function Drawgrowth(Cursor)
 {
 
     var random = RandomUp();
     var chenge = 0;
-    if(gCursorX == 0){
+
+    var state_point = ["hp","atk","def","agi"];
+
+    console.log(Cursor);
+
+    if(Cursor === 1){
         if (random === '1' || random === '3' || random === '4') {
             if (random === '1') {
                 chenge = -3;
@@ -398,7 +439,7 @@ function Drawgrowth(gCursorX)
                 chenge = 10;
             }
         }
-     }else if(gCursorX > 0 && gCursorX < 4){
+     }else if(Cursor > 1 && Cursor < 5){
             if (random == '1' || random === '3' || random === '4') {
                 if (random == '1') {
                     chenge = -1;
@@ -409,10 +450,16 @@ function Drawgrowth(gCursorX)
                 }
             }
         }
-        state[gCursorX] += chenge;
+    if(Cursor != 5){
 
-        day++;
+        shared.state[0][state_point[Cursor-1]] += chenge;
+        shared.state[0].day++;
+        DrawLife(-10);
+
+    }else if(Cursor == 5){
+        mPhase = 0;   
     }
+}
 
 
 //ランダムな値を返す関数
@@ -455,12 +502,12 @@ function DrawMonster(g){
     
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
-    g.fillText(day + "日目",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
+    g.fillText(shared.state[0].day + "日目",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
     
     DrawLife(0);
     
     g.fillStyle = "rgba(255,30,30,1)";
-    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
+    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * shared.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
     
 }
 
@@ -469,27 +516,36 @@ function DrawMonster(g){
 function DrawLife(L_moov)
 {
 
-    life = life + L_moov;
-    if(life >= 100){
-        life = 100;
+    shared.state[0].life = shared.state[0].life + L_moov;
+    if(shared.state[0].life >= 100){
+        shared.state[0].life = 100;
     }
-    if(life <= 0){
-        life = 0;
+    if(shared.state[0].life <= 0){
+        shared.state[0].life = 0;
     }
 
-    if(life <= 0){
-        mPhase = 9;
-    }
+    if(shared.state[0].life <= 0){
+        mPhase = 9; 
+    }                                                                                                                             
 }
 
+function day_puls(){
+    shared.state[0].day += 1
+}
+
+function NowCursor(){
+    var Cursor = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX;
+}
 
 //ホーム画面を描写する関数
 function DrawHome(g)
 {
+
     audio.play();
     g.fillStyle = "#F0E68C";								//	背景色
 	g.fillRect( 0, 0, WIDTH, HEIGHT );                      //  背景設定
- 
+
+
     g.fillStyle = MWNDSTYLE;                            
     g.fillRect(0,0,WIDTH - WIDTH /3.9,HEIGHT/1.52);         //モンスターウインドウ
 
@@ -502,20 +558,23 @@ function DrawHome(g)
 
     if(mPhase == 0){
         DrawMenu(g);                                        //セレクトメニュー画面を描画する
+        SetText(g,"今日は何をしますか？","","");
     }
 
     if(mPhase == 1){
         DrawMenu(g);                                        //トレーニングメニュー画面を描画する
+        SetText(g,"どの能力を鍛えますか？","","");
     }
     if(mPhase == 2){
         Drawwork(g);                                        //働いた際の処理を行う
         DrawLife(-15);
-        day++;
+        day_puls();
+
     }
     if(mPhase == 3){
         DrawLife(20);                                       //休んだ際の処理を行う
         mPhase = 0;
-        day++;
+        day_puls();
     }
     if(mPhase == 4){                                        //買い物をした際の処理を行う
         DrawShopMenu(g);
@@ -523,19 +582,19 @@ function DrawHome(g)
     if(mPhase == 5){                                        //アイテムを確認する処理を行う
         ItemCheck(g);
     }
-    if(mPhase == 9){                                        //体力がなくなった際の処理を行う
-        if(life == 0){     
-        SetText(g,"モンスターの体力が無くなってしまった！","モンスターの能力が下がった。","回復の為に三日間休んだ。")
-        state = state.map(value => Math.ceil(value * 0.8));
-        day += 3;
-        life = 50;
-        }        
-        mPhase = 0;
+    if(mPhase == 6){
+        DrawMenu(g);
+        SetText(g,"今の状況をセーブしますか？","",""); 
+        
     }
-    if((day %= 30) == 0){
+    if(mPhase == 9){                                        //体力がなくなった際の処理を行う
+        SetText(g,"モンスターの体力が無くなってしまった！","モンスターの能力が下がった。","回復の為に三日間休んだ。")
+    }
+    /*if((state[0].day %= 30) == 0){
         bPhase = 1;
         Battle();
     }
+    */
 }
 
 function Battle(){   
@@ -559,7 +618,7 @@ function WmPaint() // グラフィック系のファンクション
 function DrawMain() 
 {
 
-    const g = gScreen.getContext("2d");             // 仮想画面の2D描画コンテキスト
+    const g = gScreen.getContext("2d");            // 仮想画面の2D描画コンテキスト
 
     DrawHome(g);
 }
@@ -595,6 +654,7 @@ function WmTimer()
     WmPaint();
 
 }
+
 
 const M_moov = function(){
 
@@ -651,7 +711,6 @@ window.onkeydown = function (ev) {
         }
     }
     console.log("X:"+ gCursorX+" Y:"+gCursorY);
-    
 }
 
 
@@ -666,6 +725,7 @@ window.onkeyup = function (ev) {
         
         button_se.play();
 
+
         if (isAudioPlaying) {
             button_se.currentTime = 0;
         }
@@ -679,15 +739,17 @@ window.onkeyup = function (ev) {
             gCursorY = 0;
         }
         else if(mPhase == 1){
-            Drawgrowth(gCursorX);
+            Drawgrowth(nowCursor);
             mPhase = 0;
             gCursorX = 0;
             gCursorY = 0
-            DrawLife(-10);
+            
         }
         else if(mPhase == 2){
+            
         }
         else if(mPhase == 3){
+            shared.state[0].day++
         }
         else if(mPhase == 4){ 
             Shop();
@@ -696,9 +758,33 @@ window.onkeyup = function (ev) {
             gCursorY = 0;
         }
         else if(mPhase == 5){
+            if(shared.myitem.length != 0){
+            Use_Item();
+            }
             mPhase = 0;
             gCursorX = 0;
             gCursorY = 0
+        }
+        else if(mPhase == 6){
+            if(gCursorX == 0){
+                updata_item();
+                updata_state();
+            }
+            gCursorX = 0;
+            gCursorY = 0
+            mPhase = 0
+        }
+        else if(mPhase == 9){ 
+            console.log(shared.state[0].atk)
+            shared.state[0].hp   =  Math.floor(shared.state[0].hp  * 0.8);
+            shared.state[0].atk  =  Math.floor(shared.state[0].atk * 0.8);
+            shared.state[0].def  =  Math.floor(shared.state[0].def * 0.8);;
+            shared.state[0].agi  =  Math.floor(shared.state[0].agi * 0.8);;
+            shared.state[0].day  =  shared.state[0].day + 3;
+
+            shared.state[0].life =  50;
+
+            mPhase = 0;
         }
     }
     console.log(nowCursor);
@@ -716,14 +802,12 @@ window.onload = function ()
 
     gScreen = document.createElement("canvas"); // 仮想画面を作成
     gScreen.width = WIDTH;                      // 仮想画面の幅を設定
-    gScreen.height = HEIGHT;                    // 仮想画面の高さを設定
-    
+    gScreen.height = HEIGHT;                    // 仮想画面の高さを設定    
 
+    play_data();
     WmSize();
     window.addEventListener("resize", function () { WmSize() }); // ブラウザサイズ変更時、WmSize()が呼ばれるよう指示
-    setInterval(function () { WmTimer() }, INTERVAL);   
+    setInterval(function () { WmTimer() }, INTERVAL); 
+    //WmPaint();
     setInterval(M_moov, 6000); 
-}
-
-
 }

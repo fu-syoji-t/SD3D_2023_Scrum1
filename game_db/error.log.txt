@@ -1,0 +1,5 @@
+[19-Oct-2023 17:31:48 Europe/Berlin] PHP Warning:  Undefined variable $receivedFunction in C:\xampp\htdocs\web\game_db\db.php on line 4
+[19-Oct-2023 17:31:48 Europe/Berlin] PHP Warning:  Undefined variable $receivedFunction in C:\xampp\htdocs\web\game_db\db.php on line 4
+[19-Oct-2023 17:31:50 Europe/Berlin] PHP Warning:  Undefined variable $receivedFunction in C:\xampp\htdocs\web\game_db\db.php on line 4
+[19-Oct-2023 17:31:54 Europe/Berlin] PHP Warning:  Undefined variable $receivedFunction in C:\xampp\htdocs\web\game_db\db.php on line 4
+[19-Oct-2023 17:32:16 Europe/Berlin] PHP Warning:  Undefined variable $receivedFunction in C:\xampp\htdocs\web\game_db\db.php on line 4
