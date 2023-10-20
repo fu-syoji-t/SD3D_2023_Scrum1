@@ -41,10 +41,10 @@ CREATE TABLE `item`(
 
 INSERT INTO item (`item_id`, `item_name`, `item_effect`, `item_price`, `item_text`)
 VALUES
-  (1, '薬草',       'life += 30' , 200, '体力が30回複する'),
-  (2, '中薬草',     'life += 60' , 400, '体力が60回復する'),
-  (3, '上薬草',     'life += 100', 800, '体力が100回複する'),
-  (4, 'スライム餅', 'life =  0'  ,   0, '体力が0になる');
+  (1, '薬草',       'shared.state[0].life += 30' , 200, '体力が30回複する'),
+  (2, '中薬草',     'shared.state[0].life += 60' , 400, '体力が60回復する'),
+  (3, '上薬草',     'shared.state[0].life =  100', 800, '体力が100回複する'),
+  (4, 'スライム餅', 'shared.state[0].life =  0'  ,   0, '体力が0になる');
 
 
 
