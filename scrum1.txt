@@ -46,6 +46,13 @@ VALUES
   (3, '上薬草',     'shared.state[0].life =  100', 800, '体力が100回複する'),
   (4, 'スライム餅', 'shared.state[0].life =  0'  ,   0, '体力が0になる');
 
+CREATE TABLE `skill`(
+`skill_id`	int(11) NOT NULL PRIMARY KEY,
+`skill_name`	varchar(191) NOT NULL,
+`skill_effect`	varchar(191) NOT NULL,
+`skill_price`	int(11) NOT NULL,
+`skill_text`	varchar(191) NOT NULL
+)
 
 
 CREATE TABLE `my_monster`(
@@ -78,3 +85,13 @@ FOREIGN KEY (play_id) REFERENCES my_monster(play_id),
 FOREIGN KEY (user_id) REFERENCES user(user_id),
 FOREIGN KEY (item_id) REFERENCES item(item_id)
 );
+
+CREATE TABLE `my_skill`(
+`play_id`     int(11)  NOT NULL,
+`user_id`     int(11)  NOT NULL,
+`skill_id`    int(11)  NOT NULL PRIMARY KEY,
+PRIMARY KEY (play_id,  user_id, skill_id),     
+FOREIGN KEY (play_id)  REFERENCES my_monster(play_id),
+FOREIGN KEY (user_id)  REFERENCES user(user_id),
+FOREIGN KEY (skill_id) REFERENCES item(item_id)
+)
