@@ -42,6 +42,19 @@ if($receivedFunction === "item"){
     encode($result);
 }
 
+
+if($receivedFunction === "enemy"){
+    
+    $query = "SELECT monster_id, life, atk,def,agi
+    FROM enemy_monster
+    WHERE user_id = $user_id AND play_id = $play_id;";
+
+    $result = $dbConnection->query($query); 
+
+    encode($result);
+}
+
+
 if($receivedFunction === "myitem"){
     
     $query = "SELECT mi.item_id, mi.item_number, i.item_name, i.item_effect, i.item_price, i.item_text  
@@ -79,7 +92,7 @@ if($receivedFunction === "save_state"){
     $receiveddef  = $_POST["def"];
     $receivedagi  = $_POST["agi"];
 
-    $query = "UPDATE `my_monster`
+    $query = "UPDATE `enemy_monster`
           SET `monster_id` = $receivedid,
               `my_gold` = $receivedgold,
               `day` = $receivedday,
