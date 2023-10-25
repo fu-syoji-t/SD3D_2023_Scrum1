@@ -89,7 +89,7 @@ FOREIGN KEY (item_id) REFERENCES item(item_id)
 CREATE TABLE `my_skill`(
 `play_id`     int(11)  NOT NULL,
 `user_id`     int(11)  NOT NULL,
-`skill_id`    int(11)  NOT NULL PRIMARY KEY,
+`skill_id`    int(11)  NOT NULL,
 PRIMARY KEY (play_id,  user_id, skill_id),     
 FOREIGN KEY (play_id)  REFERENCES my_monster(play_id),
 FOREIGN KEY (user_id)  REFERENCES user(user_id),
