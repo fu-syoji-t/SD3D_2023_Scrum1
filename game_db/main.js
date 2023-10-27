@@ -88,12 +88,10 @@ async function play_data(){
     const state  =  await  load_data("state");    
     const item   =  await  load_data("item");
     const myitem =  await  load_data("myitem");
-    const enemy  =  await  load_data("enemy");
 
     shared.state = Setdata(state,);
     shared.item = Setdata(item);
     shared.myitem = Setdata(myitem);
-    shared.enemy = Setdata(enemy);
 }
 
 function Setdata(data){
@@ -184,10 +182,10 @@ function DrawStatus(g)
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
 
-    g.fillText("体力:" + shared.enemy[0].life, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
-    g.fillText("　力:" + shared.enemy[0].atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
-    g.fillText("守り:" + shared.enemy[0].def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
-    g.fillText("速さ:" + shared.enemy[0].agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
+    g.fillText("体力:" + shared.state[0].hp, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
+    g.fillText("　力:" + shared.state[0].atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
+    g.fillText("守り:" + shared.state[0].def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
+    g.fillText("速さ:" + shared.state[0].agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
 }
 
 

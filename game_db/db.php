@@ -46,8 +46,7 @@ if($receivedFunction === "item"){
 if($receivedFunction === "enemy"){
     
     $query = "SELECT monster_id, life, atk,def,agi
-    FROM enemy_monster
-    WHERE user_id = $user_id AND play_id = $play_id;";
+    FROM enemy_monster";
 
     $result = $dbConnection->query($query); 
 
