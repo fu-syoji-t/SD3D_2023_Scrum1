@@ -43,7 +43,7 @@ const MWNDSTYLE     = "rgba(203,244,255,1)"        //モンスターウインド
 const WNDSTYLE      = "rgba(0,0,0,0.75)"           //ウインドウの色
 
 
-const SelectMenu   = [/*"今日は何をしますか？",*/"鍛える","働く","休む","買い物","アイテム","セーブ"];
+const SelectMenu   = [/*"敵が現れた",*/"行動する","逃げる"];
 const TrainingMenu = [/*"何を鍛えますか？",*/"体力","力","守り","速さ","やめる"];
 const SaveMenu     = ["はい","いいえ"];
 
@@ -158,7 +158,7 @@ function LoadImage()
 function GetMenu(){
     let Cm=0;let Cx=0; let Cy=0;
     if(mPhase == 0){
-        Cm = SelectMenu;    Cx = 4; Cy = 2; 
+        Cm = SelectMenu;    Cx = 4; Cy = 1; 
     }else if(mPhase == 1){
         Cm = TrainingMenu;  Cx = 4; Cy = 2;
     }else if(mPhase == 4){
@@ -562,7 +562,7 @@ function DrawHome(g)
 
     if(mPhase == 0){
         DrawMenu(g);                                        //セレクトメニュー画面を描画する
-        SetText(g,"今日は何をしますか？","","");
+        SetText(g,"敵が現れた","","");
     }
 
     if(mPhase == 1){
