@@ -49,8 +49,8 @@ CREATE TABLE `default_monster` (
 
 INSERT INTO `default_monster` (`monster_id`, `monster_name`, `need_hp`, `need_atk`, `need_def`, `need_agi`, `need_item_id`, `correction_hp`, `correction_atk`, `correction_def`, `correction_agi`, `monster_text`, `monster_image`) VALUES
 (1, 'スライム', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, '青くて柔らかいモンスター、様々な種類がいる', 'slime.png'),
-(2, 'スライム・アクア', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, '水のように素早く動く', 'aqua.png'),
-(3, 'スライム・フレイム', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, '火のように力強い', 'fire.png'),
+(2, 'スライム・アクア', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, '水のように冷ややかで素早く動く', 'aqua.png'),
+(3, 'スライム・フレイム', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, '火のように熱くたくましく力強い', 'fire.png'),
 (4, 'スライム・ボックス', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, '箱の中に住むことで防御が上がった\r\n', 'box.png'),
 (5, 'スライム・デビル', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, '悪魔のように強く小悪魔のように可愛い', 'devil.png'),
 (6, 'スライム・メタル', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, '速いだけではなくカッチカチに倒しても経験値は少ししか変わらない\r\n', 'metal.png'),
