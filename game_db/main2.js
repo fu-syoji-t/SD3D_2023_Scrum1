@@ -44,7 +44,8 @@ const WNDSTYLE      = "rgba(0,0,0,0.75)"           //ウインドウの色
 
 
 const SelectMenu   = [/*"敵が現れた",*/"行動する","逃げる"];
-const TrainingMenu = [/*"何を鍛えますか？",*/"体力","力","守り","速さ","やめる"];
+const ActionMenu = [/*"何を鍛えますか？",*/"戦う","アイテム","特技","やめる"];
+const TestMenu= ["1","2"];
 const SaveMenu     = ["はい","いいえ"];
 
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
@@ -160,16 +161,9 @@ function GetMenu(){
     if(mPhase == 0){
         Cm = SelectMenu;    Cx = 4; Cy = 1; 
     }else if(mPhase == 1){
-        Cm = TrainingMenu;  Cx = 4; Cy = 2;
+        Cm = ActionMenu;  Cx = 4; Cy = 1;
     }else if(mPhase == 4){
-        Cm = shared.item;   Cx = 2; Cy = 2;
-    }else if(mPhase == 5){
-        Cm = shared.myitem; Cx = 2;
-
-        var mi_length = shared.myitem.length;
-        Cy = Math.floor(mi_length / 2);
-    }else if(mPhase == 6){
-        Cm = SaveMenu;      Cx = 2; Cy = 1;
+        Cm = TestMenu;   Cx = 4; Cy = 1;
     }
     return {
         Cm,Cx,Cy
@@ -192,19 +186,6 @@ function DrawStatus(g)
     g.fillText("速さ:" + shared.enemy[0].agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
 }
 
-
-//所持金を表示する関数
-function DrawG(g)
-{
-    g.fillStyle = WNDSTYLE;
-    g.fillRect(WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/6.3);   //所持金を描画するウインドウ
-
-    g.font = FONT;                                  // 文字フォントを設定
-    g.fillStyle = FONTSTYLE                         // 文字色を設定  
-
-    g.fillText("所持ゴールド", WIDTH - WIDTH/4.2, HEIGHT/1.8);        
-    g.fillText(shared.state[0].my_gold + "G", WIDTH - WIDTH/4.2, HEIGHT/1.6);           // 所持ゴールドを表示するテキスト
-}
 
 //新しいテキストを入力する前にウインドウをリセットする関数
 function ResetWND(g)
@@ -261,24 +242,8 @@ function DrawMenu(g)
 g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 1.32 + HEIGHT /11.5 * (gCursorY + 1));
 }
 
-function ItemText(g){
 
-    const NCursor = (gCursorY == 0) ? gCursorX+1 :gCursorY+2 * 2 -3 + gCursorX+1;
-    console.log(NCursor);
 
-        
-    ResetWND(g);
-
-    if(mPhase == 4){
-        SetText(g,"何を購入しますか？",shared.item[NCursor-1].item_name,shared.item[NCursor-1].item_text)
-    }else if(mPhase == 5){
-        if(shared.myitem.length > 0){
-            SetText(g,"どのアイテムを使いますか？",shared.myitem[NCursor-1].item_name,shared.myitem[NCursor-1].item_text);
-        }else{
-            SetText(g,"アイテムを持っていなかった！","お店にアイテムを買いに行こう！",""); 
-    }
-}
-}
 
 function DrawShopMenu(g){
 
@@ -312,50 +277,8 @@ function DrawShopMenu(g){
 
 
 //ショップ画面での購入処理を行う関数
-function Shop()
-{
-    let buy_Item = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX;
+          
 
-    console.log(buy_Item)
-
-    const selectedItem = shared.item[buy_Item].item_name;
-    const price        = shared.item[buy_Item].item_price;
-
-        console.log("商品名："+ selectedItem +"　値段："+price)
-        if(shared.state[0].my_gold >= price){
-        //updata_item(shared.item[buy_Item].item_id,1);
-        
-        var id = 0
-        if (shared.myitem.length > 0){
-            console.log("a");    
-        for(var i=0; shared.myitem.length > i; i++){
-            console.log("i="+i+":length="+shared.item.length);
-            
-        if(shared.myitem[i].item_id == shared.item[buy_Item].item_id){
-            shared.myitem[i].item_number++,
-            id++;
-
-            break;
-        }
-        console.log("b");
-    }
-}           
-    if(id === 0){
-        shared.myitem.push(
-            {  
-                item_id      : shared.item[buy_Item].item_id,
-                item_number  : 1,
-                item_name    : shared.item[buy_Item].item_name,
-                item_effect  : shared.item[buy_Item].item_effect,
-                item_price   : shared.item[buy_Item].item_price,
-                item_text    : shared.item[buy_Item].item_text  
-            })
-    }
-    console.log(shared.myitem);
-    shared.state[0].my_gold -= price;
-        
-    }
-}
 
 
 
@@ -423,6 +346,7 @@ function SetText(g,M1,M2,M3){
 
 
 //モンスターを鍛えた際、成長値を決定する関数
+
 function Drawgrowth(Cursor)
 {
 
@@ -434,35 +358,10 @@ function Drawgrowth(Cursor)
     console.log(Cursor);
 
     if(Cursor === 1){
-        if (random === '1' || random === '3' || random === '4') {
-            if (random === '1') {
-                chenge = -3;
-            } else if (random === '3') {
-                chenge = 3;
-            } else if (random === '4') {
-                chenge = 10;
-            }
-        }
-     }else if(Cursor > 1 && Cursor < 5){
-            if (random == '1' || random === '3' || random === '4') {
-                if (random == '1') {
-                    chenge = -1;
-                } else if (random == '3') {
-                    chenge = 1;
-                } else if (random == '4') {
-                    chenge = 3;
-                }
-            }
-        }
-    if(Cursor != 5){
-
-        shared.state[0][state_point[Cursor-1]] += chenge;
-        shared.state[0].day++;
-        DrawLife(-10);
-
-    }else if(Cursor == 5){
-        mPhase = 0;   
+        
+            
     }
+
 }
 
 
@@ -567,7 +466,7 @@ function DrawHome(g)
 
     if(mPhase == 1){
         DrawMenu(g);                                        //トレーニングメニュー画面を描画する
-        SetText(g,"どの能力を鍛えますか？","","");
+        SetText(g,"何をしますか","","");
     }
     if(mPhase == 2){
         Drawwork(g);                                        //働いた際の処理を行う
