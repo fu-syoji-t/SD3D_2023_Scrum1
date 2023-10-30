@@ -1,0 +1,65 @@
+
+import{load_data,save_item,save_state} from './db.js';
+
+const shared ={};
+
+async function play_data(){
+
+    const state  =  await  load_data("state");    
+    const item   =  await  load_data("item");
+    const myitem =  await  load_data("myitem");
+
+    shared.state = Setdata(state,);
+    shared.item = Setdata(item);
+    shared.myitem = Setdata(myitem);
+}
+
+function Setdata(data){
+
+    if(data !== null && data !== undefined){
+    for (var i = 0; i < data.length; i++) {
+        for (var key in data[i]) {
+            if (!isNaN(data[i][key])) {
+                data[i][key] = parseInt(data[i][key]);
+            }
+        }
+        
+    }
+}else(
+    data = []
+)
+
+return data;
+}
+
+
+async function updata_item(){
+    if (shared.myitem.length > 0){
+    for(const myitem of shared.myitem){
+        console.log(myitem.item_name);
+    save_item(myitem.item_id,myitem.item_number);
+    }
+}
+}
+
+async function updata_state(){
+    console.log("id"+shared.state[0].monster_id
+    +"gold"+ shared.state[0].my_gold
+    +"day"+ shared.state[0].day
+    +"life"+shared.state[0].life
+    +"hp"+shared.state[0].hp
+    +"atk"+shared.state[0].atk
+    +"def"+shared.state[0].def
+    +"agi"+shared.state[0].agi);
+
+    save_state(shared.state[0].monster_id,
+               shared.state[0].my_gold,
+               shared.state[0].day,
+               shared.state[0].life,
+               shared.state[0].hp,
+               shared.state[0].atk,
+               shared.state[0].def,
+               shared.state[0].agi,
+    )
+}
+

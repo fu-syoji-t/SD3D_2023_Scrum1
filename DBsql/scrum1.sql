@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- ホスト: 127.0.0.1
--- 生成日時: 2023-10-30 03:44:25
+-- 生成日時: 2023-10-30 04:02:29
 -- サーバのバージョン： 10.4.28-MariaDB
 -- PHP のバージョン: 8.2.4
 
@@ -155,7 +155,8 @@ CREATE TABLE `skill` (
   `skill_name` varchar(191) NOT NULL,
   `skill_count` int(11) NOT NULL,
   `skill_power` int(11) NOT NULL,
-  `skill_price` varchar(11) NOT NULL,
+  `skill_dex` int(11) NOT NULL,
+  `skill_price` int(11) NOT NULL,
   `skill_text` varchar(191) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
@@ -163,8 +164,8 @@ CREATE TABLE `skill` (
 -- テーブルのデータのダンプ `skill`
 --
 
-INSERT INTO `skill` (`skill_id`, `skill_name`, `skill_count`, `skill_power`, `skill_price`, `skill_text`) VALUES
-(1, 'スラッシュ', 3, 10, '1000', '相手を素早く切り付ける');
+INSERT INTO `skill` (`skill_id`, `skill_name`, `skill_count`, `skill_power`, `skill_dex`, `skill_price`, `skill_text`) VALUES
+(1, 'スラッシュ', 3, 10, 100, 1000, '相手を素早く切り付ける');
 
 -- --------------------------------------------------------
 
