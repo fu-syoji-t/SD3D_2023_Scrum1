@@ -162,8 +162,10 @@ function GetMenu(){
         Cm = SelectMenu;    Cx = 4; Cy = 1; 
     }else if(mPhase == 1){
         Cm = ActionMenu;  Cx = 4; Cy = 1;
-    }else if(mPhase == 4){
-        Cm = TestMenu;   Cx = 4; Cy = 1;
+    }else if(mPhase == 2){
+        Cm = TestMenu;  Cx = 4; Cy = 1;
+    }else if(mPhase == 3){
+        Cm = SaveMenu;  Cx = 4; Cy = 1;
     }
     return {
         Cm,Cx,Cy
@@ -180,10 +182,10 @@ function DrawStatus(g)
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
 
-    g.fillText("体力:" + shared.enemy[0].life, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
-    g.fillText("　力:" + shared.enemy[0].atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
-    g.fillText("守り:" + shared.enemy[0].def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
-    g.fillText("速さ:" + shared.enemy[0].agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
+    g.fillText("体力:" + shared.enemy[0].enemy_hp, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
+    g.fillText("　力:" + shared.enemy[0].enemy_atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
+    g.fillText("守り:" + shared.enemy[0].enemy_def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
+    g.fillText("速さ:" + shared.enemy[0].enemy_agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
 }
 
 
@@ -345,25 +347,6 @@ function SetText(g,M1,M2,M3){
 
 
 
-//モンスターを鍛えた際、成長値を決定する関数
-
-function Drawgrowth(Cursor)
-{
-
-    var random = RandomUp();
-    var chenge = 0;
-
-    var state_point = ["hp","atk","def","agi"];
-
-    console.log(Cursor);
-
-    if(Cursor === 1){
-        
-            
-    }
-
-}
-
 
 //ランダムな値を返す関数
 function RandomUp()
@@ -469,10 +452,8 @@ function DrawHome(g)
         SetText(g,"何をしますか","","");
     }
     if(mPhase == 2){
-        Drawwork(g);                                        //働いた際の処理を行う
-        DrawLife(-15);
-        day_puls();
-
+        DrawMenu(g);
+        SetText(g,"何をしますか","","")
     }
     if(mPhase == 3){
         DrawLife(20);                                       //休んだ際の処理を行う

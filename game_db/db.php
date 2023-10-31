@@ -45,7 +45,7 @@ if($receivedFunction === "item"){
 
 if($receivedFunction === "enemy"){
     
-    $query = "SELECT monster_id, life, atk,def,agi
+    $query = "SELECT enemy_id, monster_id, enemy_hp, enemy_atk,enemy_def,enemy_agi
     FROM enemy_monster";
 
     $result = $dbConnection->query($query); 
@@ -65,6 +65,7 @@ if($receivedFunction === "myitem"){
 
     encode($result);
 }
+
 if($receivedFunction === "save_item"){
     
     error_log("Received Function: " . $receivedFunction, 3, "error.log");

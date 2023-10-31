@@ -23,6 +23,7 @@ export function load_data(data) {
                 }
             }
         };
+        console.log(data);
         xhr.send("db_function=" + data);
     });
 }

@@ -95,3 +95,15 @@ FOREIGN KEY (play_id)  REFERENCES my_monster(play_id),
 FOREIGN KEY (user_id)  REFERENCES user(user_id),
 FOREIGN KEY (skill_id) REFERENCES item(item_id)
 )
+
+
+CREATE TABLE `enemy_monster`(
+`enemy_id`   int(11) NOT NULL PRIMARY KEY,
+`monster_id` int(11) NOT NULL,
+`enemy_hp`	 int(4)  NOT NULL,
+`enemy_atk`	 int(4)  NOT NULL,
+`enemy_def`	 int(4)  NOT NULL,
+`enemy_agi`	 int(4)  NOT NULL,
+
+FOREIGN KEY (monster_id) REFERENCES default_monster(monster_id)
+);
