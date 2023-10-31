@@ -26,6 +26,5 @@ $_SESSION['play_id'] = 1;
 
 <script  type="module" src="db.js"></script>
 <script  type="module" src="main.js"></script>
-<script type="module" src="main2.js"></script>
 
 </html>
