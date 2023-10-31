@@ -21,7 +21,7 @@ if ($dbConnection->connect_error) {
 
 if($receivedFunction === "state"){
     
-    $query = "SELECT mm.play_id, mm.user_id, mm.monster_id, mm.my_gold, mm.day, mm.life, mm.hp, mm.atk, mm.def, mm.agi,
+    $query = "SELECT mm.monster_id, mm.my_gold, mm.day, mm.life, mm.hp, mm.atk, mm.def, mm.agi,
     dm.monster_name, dm.need_hp, dm.need_atk, dm.need_def, dm.need_agi, dm.need_item_id, 
     dm.correction_hp, dm.correction_atk, dm.correction_def, dm.correction_agi, dm.monster_text, dm.monster_image
     FROM my_monster mm
@@ -53,6 +53,30 @@ if($receivedFunction === "myitem"){
 
     encode($result);
 }
+
+if($receivedFunction === "skill"){
+    
+    $query = "SELECT * FROM skill";
+
+    $result = $dbConnection->query($query); 
+
+    encode($result);
+}
+
+if($receivedFunction === "myskill"){
+    
+    $query = "SELECT s.skill_id, s.skill_name, s.skill_effect, s.skill_price, s.skill_text  
+    FROM my_skill ms
+    INNER JOIN skill s on ms.skill_id = s.skill_id
+    WHERE ms.user_id = $user_id AND ms.play_id = $play_id;";
+
+    $result = $dbConnection->query($query); 
+
+    encode($result);
+}
+
+
+
 if($receivedFunction === "save_item"){
     
     error_log("Received Function: " . $receivedFunction, 3, "error.log");
