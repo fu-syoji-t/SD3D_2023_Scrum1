@@ -45,7 +45,7 @@ const WNDSTYLE      = "rgba(0,0,0,0.75)"           //ウインドウの色
 
 const SelectMenu   = [/*"敵が現れた",*/"行動する","逃げる"];
 const ActionMenu = [/*"何を鍛えますか？",*/"戦う","アイテム","特技","やめる"];
-const TestMenu= ["test"];
+const TestMenu= ["育成画面に戻る"];
 const SaveMenu     = ["はい","いいえ"];
 
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
@@ -159,7 +159,7 @@ function LoadImage()
 function GetMenu(){
     let Cm=0;let Cx=0; let Cy=0;
     if(mPhase == 0){
-        Cm = SelectMenu;    Cx = 4; Cy = 1; 
+        Cm = SelectMenu;    Cx = 2; Cy = 1; 
     }else if(mPhase == 1){
         Cm = ActionMenu;  Cx = 4; Cy = 1;
     }else if(mPhase == 2){
@@ -260,20 +260,7 @@ function DrawShopMenu(g){
     ItemText(g);
 
     //let First = true;
-    let x = 0;
-    let y = 0;
-    let z = 0;
-    shared.item.forEach(function(item){
-        const name = item.item_name; // 二つ目の要素（価格）を取得
-        const price = item.item_price
-        g.fillText(`　${name}:${price}G`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
-        
-        x = x + 1;
-        if (x >= Menu.Cx) {
-            x = 0;
-            y++;
-        }
-    });
+    
     g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
 }
 
@@ -453,7 +440,7 @@ function DrawHome(g)
     }
     if(mPhase == 2){
         DrawMenu(g);
-        SetText(g,"何をしますか","","")
+        SetText(g,"あなたの負けです","","")
     }
     if(mPhase == 3){
         DrawLife(20);                                       //休んだ際の処理を行う
@@ -466,19 +453,6 @@ function DrawHome(g)
     if(mPhase == 5){                                        //アイテムを確認する処理を行う
         ItemCheck(g);
     }
-    if(mPhase == 6){
-        DrawMenu(g);
-        SetText(g,"今の状況をセーブしますか？","",""); 
-        
-    }
-    if(mPhase == 9){                                        //体力がなくなった際の処理を行う
-        SetText(g,"モンスターの体力が無くなってしまった！","モンスターの能力が下がった。","回復の為に三日間休んだ。")
-    }
-    /*if((state[0].day %= 30) == 0){
-        bPhase = 1;
-        Battle();
-    }
-    */
 }
 
 function Battle(){   
@@ -623,7 +597,6 @@ window.onkeyup = function (ev) {
             gCursorY = 0;
         }
         else if(mPhase == 1){
-            Drawgrowth(nowCursor);
             mPhase = 0;
             gCursorX = 0;
             gCursorY = 0
@@ -632,44 +605,7 @@ window.onkeyup = function (ev) {
         else if(mPhase == 2){
             
         }
-        else if(mPhase == 3){
-            shared.state[0].day++
-        }
-        else if(mPhase == 4){ 
-            Shop();
-            mPhase = 0;
-            gCursorX = 0;
-            gCursorY = 0;
-        }
-        else if(mPhase == 5){
-            if(shared.myitem.length != 0){
-            Use_Item();
-            }
-            mPhase = 0;
-            gCursorX = 0;
-            gCursorY = 0
-        }
-        else if(mPhase == 6){
-            if(gCursorX == 0){
-                updata_item();
-                updata_state();
-            }
-            gCursorX = 0;
-            gCursorY = 0
-            mPhase = 0
-        }
-        else if(mPhase == 9){ 
-            console.log(shared.state[0].atk)
-            shared.state[0].hp   =  Math.floor(shared.state[0].hp  * 0.8);
-            shared.state[0].atk  =  Math.floor(shared.state[0].atk * 0.8);
-            shared.state[0].def  =  Math.floor(shared.state[0].def * 0.8);;
-            shared.state[0].agi  =  Math.floor(shared.state[0].agi * 0.8);;
-            shared.state[0].day  =  shared.state[0].day + 3;
-
-            shared.state[0].life =  50;
-
-            mPhase = 0;
-        }
+        
     }
     console.log(nowCursor);
 }
