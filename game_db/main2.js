@@ -45,7 +45,7 @@ const WNDSTYLE      = "rgba(0,0,0,0.75)"           //ウインドウの色
 
 const SelectMenu   = [/*"敵が現れた",*/"行動する","逃げる"];
 const ActionMenu = [/*"何を鍛えますか？",*/"戦う","アイテム","特技","やめる"];
-const TestMenu= ["1","2"];
+const TestMenu= ["test"];
 const SaveMenu     = ["はい","いいえ"];
 
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
