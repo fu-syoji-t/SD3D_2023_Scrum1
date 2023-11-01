@@ -37,7 +37,7 @@ const MWNDSTYLE     = "rgba(203,244,255,1)"        //モンスターウインド
 const WNDSTYLE      = "rgba(0,0,0,0.75)"           //ウインドウの色
 
 
-const SelectMenu   = ["鍛える","働く","休む","買い物","アイテム","とくぎ","セーブ"];
+const SelectMenu   = ["鍛える","働く","休む","買い物","アイテム","とくぎ","進化","セーブ"];
 const TrainingMenu = ["体力","力","守り","速さ","やめる"];
 const WorkMenu     = ["果物屋","大工の手伝い","モンスター退治","やめる"];
 const restMenu     = ["家で休む:0G","街で遊ぶ:200G","旅行する:500G","やめる"];
@@ -85,7 +85,7 @@ let befor_state;                               //更新前のステータス
 let after_state;                               //更新後のステータス
 
 
-import{load_data,save_item,save_state} from './db.js';
+import{load_data,save_item,save_state,save_skill} from './db.js';
 
 const shared ={};
 
@@ -129,6 +129,14 @@ async function updata_item(){
 }
 }
 
+async function updata_skill(){
+    if (shared.myskill.length > 0){
+        for(const myskill of shared.myskill){
+        save_skill(myskill.skill_id);
+        }
+    }
+}
+
 async function updata_state(){
     console.log("id"+shared.state[0].monster_id
     +"gold"+ shared.state[0].my_gold
@@ -149,7 +157,6 @@ async function updata_state(){
                shared.state[0].agi,
     )
 }
-
 
 //画像の読み込みを行う関数
 function LoadImage()
@@ -189,7 +196,7 @@ function GetMenu(){
         var ms_length = shared.skill.length;
         Cy = Math.ceil(ms_length / 2);
     }
-    else if(mPhase == 7){
+    else if(mPhase == 8){
         Cm = ChoiceMenu;      Cx = 2; Cy = 1;
     }
     return {
@@ -276,7 +283,6 @@ function ItemText(){
             SetText("アイテムを持っていなかった！","お店にアイテムを買いに行こう！",""); 
         }
     }else if(mPhase == 61){
-
         SetText("どの特技を習得しますか？",shared.skill[Cursor-1].skill_name,shared.skill[Cursor-1].skill_text);
     }
 }
@@ -290,18 +296,30 @@ function DrawShopMenu(g){
     ItemText();
 
     let x = 0; let y = 0;let name; let price
-    Menu.Cm.forEach(function(item){
+    Menu.Cm.forEach(function(buy){
         if(mPhase == 4){
-            name = item.item_name;  price = item.item_price;
-        }else if(mPhase == 61){
-            name = item.skill_name; price = item.skill_price;
+            name = buy.item_name;  price = buy.item_price;
+        }else if(mPhase === 61){
+            name = buy.skill_name;
+            var S_count = 0 
+            shared.myskill.forEach(function(ms){
+                if(ms.skill_id === buy.skill_id){
+                    price = buy.skill_price;
+                    price = "習得済";
+                    S_count += 1
+                }
+            });
+            if(S_count === 0){
+                price = buy.skill_price
+            }
         }
-        g.fillText(`　${name}:${price}G`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
+        g.fillText(`　${name}:${price}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
         x = x + 1;
         if (x >= Menu.Cx) {
             x = 0;
             y++;
         }
+        
     });
     g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
 }
@@ -342,6 +360,9 @@ function Shop()
         }
         console.log(shared.myitem);
         shared.state[0].my_gold -= price;
+        SetText("まいどあり！！","","");
+    }else{
+        SetText("ゴールドが足りないみたいだ…","","");
     }
 }
 
@@ -355,22 +376,22 @@ function SkillShop()
 
         console.log("商品名："+ selectedSkill +"　値段："+ skillprice)
         if(shared.state[0].my_gold >= skillprice){
-        //updata_item(shared.item[buy_Item].item_id,1);
-        
+
         shared.myskill.push(
-            {  
+            {
                 skill_id      : shared.skill[buy_Skill].skill_id,
                 skill_name    : shared.skill[buy_Skill].skill_name,
                 skill_effect  : shared.skill[buy_Skill].skill_effect,
                 skill_price   : shared.skill[buy_Skill].skill_price,
                 skill_text    : shared.skill[buy_Skill].skill_text  
             })
-    console.log(shared.myitem);
-    shared.state[0].my_gold -= price;    
+    console.log(shared.myskill);
+    shared.state[0].my_gold -= price;
+        SetText("また来るがよい");
+    }else{
+        SetText("お金が足りないみたいだ…","","");
     }
 }
-
-
 
 //アイテムを確認する項目を描画する関数
 function ItemCheck(g){
@@ -641,7 +662,7 @@ function DrawHome(g)
     if(mPhase == 61){
         DrawShopMenu(g);
     }
-    if(mPhase == 7){
+    if(mPhase == 8){
         DrawMenu(g);
         SetText("今の状況をセーブしますか？","",""); 
     }
@@ -816,8 +837,11 @@ window.onkeyup = function (ev) {
             return;
         }else if(mPhase == 4){
             Shop();
-            ChangePhase(0);
-        }else if(mPhase == 5){
+            ChangePhase(41);
+        }else if(mPhase == 41){
+            ChangePhase(0)
+        }
+        else if(mPhase == 5){
             if(shared.myitem.length != 0){
             Use_Item();
             }
@@ -831,13 +855,20 @@ window.onkeyup = function (ev) {
             }
         }else if(mPhase == 61){
             SkillShop();
+            ChangePhase(62);
+        }else if(mPhase == 62){
             ChangePhase(0);
-        }else if(mPhase == 61.5){
+        }
+        else if(mPhase == 61.5){
+        }
+        else if(mPhase == 7){
             
-        }else if(mPhase == 7){
+        }
+        else if(mPhase == 8){
             if(gCursorX == 0){
                 updata_item();
                 updata_state();
+                updata_skill();
             }
             ChangePhase(0);
             return;
