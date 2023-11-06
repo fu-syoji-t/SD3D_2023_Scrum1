@@ -44,9 +44,10 @@ const WNDSTYLE      = "rgba(0,0,0,0.75)"           //ウインドウの色
 
 
 const SelectMenu   = [/*"敵が現れた",*/"行動する","逃げる"];
-const ActionMenu = [/*"何を鍛えますか？",*/"戦う","アイテム","特技","やめる"];
+const ActionMenu = [/*"何をしますか？",*/"戦う","特技","アイテム","やめる"];
+const FightMenu = [/*"何をしますか？",*/"はたく","蹴る","鳴き声","破壊光線"];
+const SpecialMenu = [/**特技のあれを使いますか */"使う","やめる"];
 const TestMenu= ["育成画面に戻る"];
-const SaveMenu     = ["はい","いいえ"];
 
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
 
@@ -163,9 +164,9 @@ function GetMenu(){
     }else if(mPhase == 1){
         Cm = ActionMenu;  Cx = 4; Cy = 1;
     }else if(mPhase == 2){
-        Cm = TestMenu;  Cx = 4; Cy = 1;
+        Cm = FightMenu;  Cx = 4; Cy = 1;
     }else if(mPhase == 3){
-        Cm = SaveMenu;  Cx = 4; Cy = 1;
+        Cm = SpecialMenu;  Cx = 4; Cy = 1;
     }
     return {
         Cm,Cx,Cy
@@ -183,7 +184,7 @@ function DrawStatus(g)
     g.fillStyle = FONTSTYLE                         // 文字色を設定
 
     g.fillText("体力:" + shared.enemy[0].enemy_hp, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
-    g.fillText("　力:" + shared.enemy[0].enemy_atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
+    g.fillText("力:" + shared.enemy[0].enemy_atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
     g.fillText("守り:" + shared.enemy[0].enemy_def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
     g.fillText("速さ:" + shared.enemy[0].enemy_agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
 }
@@ -198,22 +199,6 @@ function ResetWND(g)
 
 
 //メニュー画面を描画する関数
-
-function Drawwork(g)
-{
-    ResetWND(g);
-    g.font = FONT;  // 文字フォントを設定
-    g.fillStyle = FONTSTYLE                         // 文字色を設定
-
-    let PlusG = 100;
-
-    //g.fillText("モンスターと一緒に働いて"+PlusG+"G手に入れた！！" , WIDTH/28,HEIGHT / 1.32);
-
-    shared.state[0].my_gold += PlusG;
-
-    mPhase = 0;
-    gCursorX = 0;
-}
 
 function DrawMenu(g)
 {
@@ -263,9 +248,6 @@ function DrawShopMenu(g){
     
     g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
 }
-
-
-//ショップ画面での購入処理を行う関数
           
 
 
@@ -335,12 +317,6 @@ function SetText(g,M1,M2,M3){
 
 
 
-//ランダムな値を返す関数
-function RandomUp()
-{
-   const random = Math.random() * 100;
-   return random <= 1 ? '1' : random <= 25 ? '2' : random <= 98 ? '3' : '4';
-}
 
 
 //モンスターを移動させる関数
@@ -440,23 +416,11 @@ function DrawHome(g)
     }
     if(mPhase == 2){
         DrawMenu(g);
-        SetText(g,"あなたの負けです","","")
-    }
-    if(mPhase == 3){
-        DrawLife(20);                                       //休んだ際の処理を行う
-        mPhase = 0;
-        day_puls();
-    }
-    if(mPhase == 4){                                        //買い物をした際の処理を行う
-        DrawShopMenu(g);
-    }
-    if(mPhase == 5){                                        //アイテムを確認する処理を行う
-        ItemCheck(g);
+        SetText(g,"あなたの負けです","","")                 //逃げるを選択した時の処理
     }
 }
 
-function Battle(){   
-}
+
 
 
 function WmPaint() // グラフィック系のファンクション
@@ -597,9 +561,9 @@ window.onkeyup = function (ev) {
             gCursorY = 0;
         }
         else if(mPhase == 1){
-            mPhase = 0;
-            gCursorX = 0;
-            gCursorY = 0
+            mPhase = 1;
+            gCursorX = 1;
+            gCursorY = 0;
             
         }
         else if(mPhase == 2){
