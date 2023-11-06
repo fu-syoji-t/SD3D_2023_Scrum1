@@ -41,7 +41,7 @@ const SelectMenu   = ["鍛える","働く","休む","買い物","アイテム","
 const TrainingMenu = ["体力","力","守り","速さ","やめる"];
 const WorkMenu     = ["果物屋","大工の手伝い","モンスター退治","やめる"];
 const restMenu     = ["家で休む:0G","街で遊ぶ:200G","旅行する:500G","やめる"];
-const SkillMenu     = ["特技を覚える","特技をセットする"];
+const SkillMenu   　= ["特技を覚える","特技をセットする"];
 const ChoiceMenu   = ["はい","いいえ"];
 
 const state_point  = ["hp","atk","def","agi","life","my_gold"];
