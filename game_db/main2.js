@@ -80,9 +80,21 @@ let now_placeY = Start_placeY;                 //現在のモンスターの横�
 let randomX = null;                            //モンスターを動かす縦位置
 let randomY = null;                            //モンスターを動かす横位置
 
+let pDogge;
+let eDogge;
+let random; 
+let min = 1;
+let max = 100;
+let dmg;
+
+let mHp
+let eHp
+
+
 import{load_data,save_item,save_state} from './db.js';
 
 const shared ={};
+
 
 
 async function play_data(){
@@ -163,7 +175,7 @@ function GetMenu(){
         Cm = SelectMenu;    Cx = 2; Cy = 1; 
     }else if(mPhase == 1){
         Cm = ActionMenu;  Cx = 4; Cy = 1;
-    }else if(mPhase == 2){
+    }else if(mPhase == 3){
         Cm = FightMenu;  Cx = 4; Cy = 1;
     }else if(mPhase == 3){
         Cm = SpecialMenu;  Cx = 4; Cy = 1;
@@ -189,7 +201,6 @@ function DrawStatus(g)
     g.fillText("速さ:" + shared.enemy[0].enemy_agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
 }
 
-
 //新しいテキストを入力する前にウインドウをリセットする関数
 function ResetWND(g)
 {
@@ -202,7 +213,6 @@ function ResetWND(g)
 
 function DrawMenu(g)
 {
-    ResetWND(g);
     let Menu = GetMenu();
 
     g.font = FONT;  // 文字フォントを設定
@@ -255,7 +265,6 @@ function DrawShopMenu(g){
 
 //アイテムを確認する項目を描画する関数
 function ItemCheck(g){
-    ResetWND(g);
     g.fillStyle = WNDSTYLE;
     g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
 
@@ -304,19 +313,19 @@ function Use_Item(){
     }
 }
 
-function SetText(g,M1,M2,M3){
+function Drawmessage(g){
+    g.font = FONT; g.fillStyle = FONTSTYLE
 
-    g.font = FONT;  // 文字フォントを設定
-    g.fillStyle = FONTSTYLE                         // 文字色を設定
-
-    g.fillText(M1, WIDTH / 28 ,HEIGHT / 1.32 + HEIGHT /11.5 * 0);
-    g.fillText(M2, WIDTH / 28 ,HEIGHT / 1.32 + HEIGHT /11.5 * 1);
-    g.fillText(M3, WIDTH / 28 ,HEIGHT / 1.32 + HEIGHT /11.5 * 2);
+    g.fillText(gMessage1, WIDTH / 28, HEIGHT / 1.32, HEIGHT / 11.5 * 0);
+    g.fillText(gMessage2, WIDTH / 28, HEIGHT / 1.32, HEIGHT / 11.5 * 1);
+    g.fillText(gMessage3, WIDTH / 28, HEIGHT / 1.32, HEIGHT / 11.5 * 2);
 }
 
-
-
-
+function SetText(M1,M2,M3){
+   gMessage1 = M1;
+   gMessage2 = M2;
+   gMessage3 = M3;
+}
 
 
 //モンスターを移動させる関数
@@ -378,6 +387,67 @@ function DrawLife(L_moov)
     }                                                                                                                             
 }
 
+function gAttack(){
+    SetText("味方のモンスターの攻撃！","","") 
+    random = Math.floor(Math.random() * (max - min) + min);
+    //console.log(random);
+    if((95 - eDogge) >= random){
+        console.log("命中")
+        dmg = Math.ceil((shared.state[0].atk * 20) / shared.enemy[0].enemy_def);
+        eHp -= dmg;
+    }else{
+        dmg = 0;
+        console.log("当たらなかった！")
+    }
+        console.log("ダメージ数：" + dmg);
+
+}
+
+function eAttack(){
+    SetText("敵のモンスターの攻撃！","","") 
+    random = Math.floor(Math.random() * (max - min) + min);
+    //console.log(random);
+    if((95 - pDogge) >= random){
+        console.log("命中")
+        dmg = Math.ceil((shared.enemy[0].enemy_atk * 20) / shared.state[0].def);
+        mHp -= dmg;
+    }else{
+        dmg = 0;
+        console.log("当たらなかった！")
+    }
+        console.log("ダメージ数：" + dmg);
+}
+
+function bAttack(){
+    if(shared.state[0].agi < shared.enemy[0].enemy_agi){
+        eDogge = (shared.enemy[0].enemy_agi - shared.state[0].agi) * 0.1;
+        pDogge = 0;
+    }else{
+        pDogge = (shared.state[0].agi - shared.enemy[0].enemy_agi) * 0.1;
+        eDogge = 0;
+    }
+
+    if(shared.state[0].agi < shared.enemy[0].enemy_agi){
+        eAttack();
+        /*
+        if(gHP > 0){
+            gAttack();
+        }
+        */
+        gAttack();
+        /*
+        if(eHP > 0){
+            eAttack();
+        }
+        */
+    }
+    /*
+    if(eHP <= 0 || gHP <= 0){
+        console.log("バトル終了！")
+    }
+    */
+}
+
 function day_puls(){
     shared.state[0].day += 1
 }
@@ -393,6 +463,7 @@ function DrawHome(g)
     audio.play();
     g.fillStyle = "#F0E68C";								//	背景色
 	g.fillRect( 0, 0, WIDTH, HEIGHT );                      //  背景設定
+    ResetWND(g)
 
 
     g.fillStyle = MWNDSTYLE;                            
@@ -407,17 +478,24 @@ function DrawHome(g)
 
     if(mPhase == 0){
         DrawMenu(g);                                        //セレクトメニュー画面を描画する
-        SetText(g,"敵が現れた","","");
+        SetText("敵が現れた","","");
     }
 
     if(mPhase == 1){
         DrawMenu(g);                                        //トレーニングメニュー画面を描画する
-        SetText(g,"何をしますか","","");
+        SetText("何をしますか","","");
     }
     if(mPhase == 2){
-        DrawMenu(g);
-        SetText(g,"あなたの負けです","","")                 //逃げるを選択した時の処理
+        /*
+        bAttack();
+        SetText(g,"通常攻撃！","","")                 //逃げるを選択した時の処理
+        */
     }
+    if(mPhase == 3){
+        DrawMenu(g);
+        SetText("あなたの負けです","","")                 //逃げるを選択した時の処理
+    }
+    Drawmessage(g);
 }
 
 
@@ -561,10 +639,29 @@ window.onkeyup = function (ev) {
             gCursorY = 0;
         }
         else if(mPhase == 1){
+            if(nowCursor == 1){
+                bAttack();
+                gCursorX = 0;
+                gCursorY = 0;
+                mPhase = 2;
+            }else if(nowCursor == 2){
+                gCursorX = 0;
+                gCursorY = 0;
+                mPhase = 3;
+            }else if(nowCursor == 3){
+                gCursorX = 0;
+                gCursorY = 0;
+                mPhase = 4;
+            }else if(nowCursor == 4){
+                gCursorX = 0;
+                gCursorY = 0;
+                mPhase = 0;
+            }
+            /*
             mPhase = 1;
             gCursorX = 1;
             gCursorY = 0;
-            
+            */
         }
         else if(mPhase == 2){
             
