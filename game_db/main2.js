@@ -48,6 +48,7 @@ const ActionMenu = [/*"何をしますか？",*/"戦う","特技","アイテム"
 const FightMenu = [/*"何をしますか？",*/"はたく","蹴る","鳴き声","破壊光線"];
 const SpecialMenu = [/**特技のあれを使いますか */"使う","やめる"];
 const TestMenu= ["育成画面に戻る"];
+const RunawayMenu = [/*本当に逃げますか？*/"はい","いいえ"];
 
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
 
