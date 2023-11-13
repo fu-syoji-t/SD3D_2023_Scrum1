@@ -32,6 +32,7 @@ customFont.loaded.then(function() {
 const FONTSTYLE     = "#ffffff";                   //文字色
 const INTERVAL      = 66;                          //フレーム呼び出し感覚
 const gFileMonster  = "img/mob_icon.png"           //画像。テスト
+const gFileMonster2  = "img/mob_icon.png"           //画像。テスト
 const HEIGHT        = 1000;                        //仮想画面サイズ、高さ
 const WIDTH         = 1000;                        //仮想画面サイズ、幅
 
@@ -68,7 +69,7 @@ let Cursor = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX;
 let gFrame = 0;                                //内部カウンタ
 let gWidth;                                    //実画面の幅
 let gHeight;                                   //実画面の高さ
-let gImgMonster;                               //画像。テスト
+let gImgMonster;                               //画像。テスト                              //画像。テスト 
 let Monster_number = 1;                        //モンスターの番号
 let gScreen;                                   //仮想画面
 let gIsKeyDown = {};                           //キーが押されているかどうかを示すオブジェクト
@@ -199,6 +200,17 @@ function DrawStatus(g)
     g.fillText("力:" + shared.enemy[0].enemy_atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
     g.fillText("守り:" + shared.enemy[0].enemy_def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
     g.fillText("速さ:" + shared.enemy[0].enemy_agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
+}
+function LoadImage2()
+{
+    gImgMonster    = new Image(); gImgMonster.src    = gFileMonster;         // モンスター画像読み込み
+}
+
+function DrawMymon(g)
+{
+    g.fillStyle = WNDSTYLE;         // ウインドウの色
+    g.fillRect(WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/2.8);     // 短形描画
+
 }
 
 //新しいテキストを入力する前にウインドウをリセットする関数
@@ -353,8 +365,8 @@ function DrawMonster(g){
     WIDTH/3,HEIGHT/3);
     moovMonster();
         
-    g.fillStyle = WNDSTYLE;                             // ウインドウの色
-    g.fillRect(WIDTH/80,HEIGHT/80,WIDTH/7,65);          //日数を表記するウインドウ
+               // ウインドウの色
+    g.fillRect(WIDTH/40,HEIGHT/65,WIDTH/7,65);          //日数を表記するウインドウ
     
     g.fillRect(now_placeX + WIDTH / 39 ,now_placeY-WIDTH/200,WIDTH/3.5,HEIGHT/45); //ライフバー（黒）を表記するウインドウ
     
@@ -469,7 +481,10 @@ function DrawHome(g)
     g.fillStyle = MWNDSTYLE;                            
     g.fillRect(0,0,WIDTH - WIDTH /3.9,HEIGHT/1.52);         //モンスターウインドウ
 
-    DrawMonster(g);                                         //モンスターを描画する関数
+    DrawMymon(g);                                           //自分のモンスターを表示
+
+    DrawMonster(g);
+    DrawMonster2(g);                                //モンスターを描画する関数
    
     DrawStatus(g);                                          //ステータスウインドウを描画する関数
     //DrawG(g);                                               //所持ゴールドウインドウを描画する関数
@@ -498,7 +513,16 @@ function DrawHome(g)
     Drawmessage(g);
 }
 
+function DrawMonster2(g){
+    g.fillStyle = "rgba(255,30,30,1)";
+    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * shared.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
 
+    g.drawImage(gImgMonster,Monster_number-1,0, M_WIDTH , M_HEIGHT,760, HEIGHT/1.9, WIDTH/6, HEIGHT/4,
+    WIDTH/5,HEIGHT/5);
+    
+    g.font = FONT;  // 文字フォントを設定
+    g.fillStyle = FONTSTYLE                         // 文字色を設定
+}
 
 
 function WmPaint() // グラフィック系のファンクション
