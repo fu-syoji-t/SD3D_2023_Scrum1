@@ -32,7 +32,6 @@ customFont.loaded.then(function() {
 const FONTSTYLE     = "#ffffff";                   //文字色
 const INTERVAL      = 66;                          //フレーム呼び出し感覚
 const gFileMonster  = "img/mob_icon.png"           //画像。テスト
-const gFileMonster2  = "img/mob_icon.png"           //画像。テスト
 const HEIGHT        = 1000;                        //仮想画面サイズ、高さ
 const WIDTH         = 1000;                        //仮想画面サイズ、幅
 
@@ -48,6 +47,7 @@ const SelectMenu   = [/*"敵が現れた",*/"行動する","逃げる"];
 const ActionMenu = [/*"何をしますか？",*/"戦う","特技","アイテム","やめる"];
 const FightMenu = [/*"何をしますか？",*/"はたく","蹴る","鳴き声","破壊光線"];
 const SpecialMenu = [/**特技のあれを使いますか */"使う","やめる"];
+const NigeMenu =[/*"本当に逃げますか？" */"はい","いいえ"];
 const TestMenu= ["育成画面に戻る"];
 
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
@@ -65,11 +65,11 @@ let gMessage3 = null;
 
 let gCursorX = 0;                              //カーソルの横位置                      
 let gCursorY = 0;                              //カーソルの縦位置
-let Cursor = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX;
+let Cursor;
 let gFrame = 0;                                //内部カウンタ
 let gWidth;                                    //実画面の幅
 let gHeight;                                   //実画面の高さ
-let gImgMonster;                               //画像。テスト                              //画像。テスト 
+let gImgMonster;                               //画像。テスト
 let Monster_number = 1;                        //モンスターの番号
 let gScreen;                                   //仮想画面
 let gIsKeyDown = {};                           //キーが押されているかどうかを示すオブジェクト
@@ -180,6 +180,8 @@ function GetMenu(){
         Cm = FightMenu;  Cx = 4; Cy = 1;
     }else if(mPhase == 3){
         Cm = SpecialMenu;  Cx = 4; Cy = 1;
+    }else if(mPhase == 2){
+        Cm = NigeMenu;  Cx = 2; Cy = 1;
     }
     return {
         Cm,Cx,Cy
@@ -201,17 +203,6 @@ function DrawStatus(g)
     g.fillText("守り:" + shared.enemy[0].enemy_def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
     g.fillText("速さ:" + shared.enemy[0].enemy_agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
 }
-function LoadImage2()
-{
-    gImgMonster    = new Image(); gImgMonster.src    = gFileMonster;         // モンスター画像読み込み
-}
-function DrawMymon(g)
-{
-    g.fillStyle = WNDSTYLE;         // ウインドウの色
-    g.fillRect(WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/2.8);     // 短形描画
-
-}
-
 
 //新しいテキストを入力する前にウインドウをリセットする関数
 function ResetWND(g)
@@ -220,7 +211,12 @@ function ResetWND(g)
     g.fillRect(WIDTH/80, HEIGHT / 2 + HEIGHT/5.4 ,WIDTH/1.37 , WIDTH/3.3);     // 短形描画
 }
 
+function DrawMymon(g)
+{
+    g.fillStyle = WNDSTYLE;         // ウインドウの色
+    g.fillRect(WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/2.8);     // 短形描画
 
+}
 //メニュー画面を描画する関数
 
 function DrawMenu(g)
@@ -328,9 +324,11 @@ function Use_Item(){
 function Drawmessage(g){
     g.font = FONT; g.fillStyle = FONTSTYLE
 
-    g.fillText(gMessage1, WIDTH / 28, HEIGHT / 1.32, HEIGHT / 11.5 * 0);
-    g.fillText(gMessage2, WIDTH / 28, HEIGHT / 1.32, HEIGHT / 11.5 * 1);
-    g.fillText(gMessage3, WIDTH / 28, HEIGHT / 1.32, HEIGHT / 11.5 * 2);
+    g.fillText(gMessage1, WIDTH / 28, HEIGHT / 1.32 + HEIGHT / 11.5 * 0);
+    g.fillText(gMessage2, WIDTH / 28, HEIGHT / 1.32 + HEIGHT / 11.5 * 1);
+    g.fillText(gMessage3, WIDTH / 28, HEIGHT / 1.32 + HEIGHT / 11.5 * 2);
+
+    console.log(gMessage1,gMessage2,gMessage3);
 }
 
 function SetText(M1,M2,M3){
@@ -365,8 +363,8 @@ function DrawMonster(g){
     WIDTH/3,HEIGHT/3);
     moovMonster();
         
-               // ウインドウの色
-    g.fillRect(WIDTH/40,HEIGHT/65,WIDTH/7,65);          //日数を表記するウインドウ
+    g.fillStyle = WNDSTYLE;                             // ウインドウの色
+    g.fillRect(WIDTH/80,HEIGHT/80,WIDTH/7,65);          //日数を表記するウインドウ
     
     g.fillRect(now_placeX + WIDTH / 39 ,now_placeY-WIDTH/200,WIDTH/3.5,HEIGHT/45); //ライフバー（黒）を表記するウインドウ
     
@@ -385,7 +383,6 @@ function DrawMonster(g){
 //モンスターのライフバーを描画する関数
 function DrawLife(L_moov)
 {
-
     shared.state[0].life = shared.state[0].life + L_moov;
     if(shared.state[0].life >= 100){
         shared.state[0].life = 100;
@@ -465,7 +462,8 @@ function day_puls(){
 }
 
 function NowCursor(){
-    var Cursor = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX;
+    var Menu = GetMenu();
+    Cursor = (gCursorY == 0) ? gCursorX + 1 : gCursorY * Menu.Cx + gCursorX + 1
 }
 
 //ホーム画面を描写する関数
@@ -480,11 +478,9 @@ function DrawHome(g)
 
     g.fillStyle = MWNDSTYLE;                            
     g.fillRect(0,0,WIDTH - WIDTH /3.9,HEIGHT/1.52);         //モンスターウインドウ
-
-    DrawMymon(g);                                     //自分のモンスターを表示
-
-    DrawMonster(g);
-    DrawMonster2(g);                                //モンスターを描画する関数
+    DrawMymon(g);
+    DrawMonster(g); 
+    DrawMonster2(g);                               //モンスターを描画する関数
     
     DrawStatus(g);                                          //ステータスウインドウを描画する関数
     //DrawG(g);                                               //所持ゴールドウインドウを描画する関数
@@ -501,6 +497,9 @@ function DrawHome(g)
         SetText("何をしますか","","");
     }
     if(mPhase == 2){
+
+        DrawMenu(g);
+        SetText("本当に逃げますか？","","");
         /*
         bAttack();
         SetText(g,"通常攻撃！","","")                 //逃げるを選択した時の処理
@@ -513,6 +512,8 @@ function DrawHome(g)
     Drawmessage(g);
 }
 
+
+
 function DrawMonster2(g){
     g.fillStyle = "rgba(255,30,30,1)";
     g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * shared.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
@@ -523,8 +524,6 @@ function DrawMonster2(g){
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
 }
-
-
 function WmPaint() // グラフィック系のファンクション
 {
     DrawMain();
@@ -532,9 +531,7 @@ function WmPaint() // グラフィック系のファンクション
     const ca = document.getElementById("main");// mainキャンバスの要素を取得
     const g = ca.getContext("2d");             // 2D描画コンテキストを取得
 
-
     g.drawImage(gScreen, 0, 0, gScreen.width, gScreen.height, 0, 0, gWidth, gHeight); // 仮想画面のイメージを実画面へと転送
-
 }
 
 
@@ -576,7 +573,6 @@ function WmTimer()
 {
     gFrame++;                                  // 内部カウンタを加算
     WmPaint();
-
 }
 
 
@@ -635,15 +631,22 @@ window.onkeydown = function (ev) {
         }
     }
     console.log("X:"+ gCursorX+" Y:"+gCursorY);
+    NowCursor();
 }
 
+function ChangePhase(m){
+    mPhase = m;
+    gCursorX = 0;
+    gCursorY = 0;
+
+    NowCursor();
+}
 
 
 window.onkeyup = function (ev) {
     let c = ev.keyCode;     // キーコード取得
     gIsKeyDown[c] = false;
     
-    let nowCursor = (gCursorY == 0) ? gCursorX+1 :gCursorY+2 * 2 -1 + gCursorX+1;
 
     if(c == 13 || c == 90){             //Enterキー、またはzキーの場合
         
@@ -658,28 +661,18 @@ window.onkeyup = function (ev) {
 
 
         if(mPhase == 0){
-            mPhase = nowCursor;
-            gCursorX = 0;
-            gCursorY = 0;
+            ChangePhase(Cursor);
         }
         else if(mPhase == 1){
-            if(nowCursor == 1){
+            if(Cursor == 1){
                 bAttack();
-                gCursorX = 0;
-                gCursorY = 0;
-                mPhase = 2;
-            }else if(nowCursor == 2){
-                gCursorX = 0;
-                gCursorY = 0;
-                mPhase = 3;
-            }else if(nowCursor == 3){
-                gCursorX = 0;
-                gCursorY = 0;
-                mPhase = 4;
-            }else if(nowCursor == 4){
-                gCursorX = 0;
-                gCursorY = 0;
-                mPhase = 0;
+                ChangePhase(3);
+            }else if(Cursor == 2){
+                ChangePhase(4);
+            }else if(Cursor == 3){
+                ChangePhase(5);
+            }else if(Cursor == 4){
+                ChangePhase(6);
             }
             /*
             mPhase = 1;
@@ -692,7 +685,7 @@ window.onkeyup = function (ev) {
         }
         
     }
-    console.log(nowCursor);
+    console.log(Cursor);
 }
 
 
