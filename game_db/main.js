@@ -22,10 +22,8 @@ customFont.loaded.then(function() {
 //---------------------------------------------------------
 
 
-
 const FONTSTYLE     = "#ffffff";                   //文字色
 const INTERVAL      = 66;                          //フレーム呼び出し感覚
-const gFileMonster  = "img/mob_icon.png"           //画像。テスト
 const HEIGHT        = 1000;                        //仮想画面サイズ、高さ
 const WIDTH         = 1000;                        //仮想画面サイズ、幅
 
@@ -41,10 +39,10 @@ const SelectMenu   = ["鍛える","働く","休む","買い物","アイテム","
 const TrainingMenu = ["体力","力","守り","速さ","やめる"];
 const WorkMenu     = ["果物屋","大工の手伝い","モンスター退治","やめる"];
 const restMenu     = ["家で休む:0G","街で遊ぶ:200G","旅行する:500G","やめる"];
-const SkillMenu   　= ["特技を覚える","特技をセットする"];
+const SkillMenu    = ["特技を覚える","特技をセットする"];
 const ChoiceMenu   = ["はい","いいえ"];
 
-const state_point  = ["hp","atk","def","agi","life","my_gold"];
+const state_point  = ["hp","atk","def","agi"];
 
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
 
@@ -59,6 +57,9 @@ let gMessage1 = null;
 let gMessage2 = null;
 let gMessage3 = null;
 
+let setskill = [null,null,null,0];
+let SkillCursor
+
 let Cursor = 0;
 let gCursorX = 0;                              //カーソルの横位置                      
 let gCursorY = 0;                              //カーソルの縦位置
@@ -66,6 +67,7 @@ let gFrame = 0;                                //内部カウンタ
 let gWidth;                                    //実画面の幅
 let gHeight;                                   //実画面の高さ
 let gImgMonster;                               //画像。テスト
+let gImgEMonster
 let Monster_number = 0;                        //モンスターの番号
 let gScreen;                                   //仮想画面
 let gIsKeyDown = {};                           //キーが押されているかどうかを示すオブジェクト
@@ -75,6 +77,7 @@ let bPhase = 0;                                //戦闘画面のフェーズ
 let CLife = 0;
 let CGold = 0;
 let ShopFlag = "";
+let evolution_monster = 0;
 
 let now_placeX = Start_placeX;                 //現在のモンスターの縦位置
 let now_placeY = Start_placeY;                 //現在のモンスターの横位置 
@@ -84,24 +87,25 @@ let randomY = null;                            //モンスターを動かす横�
 let befor_state;                               //更新前のステータス
 let after_state;                               //更新後のステータス
 
-
 import{load_data,save_item,save_state,save_skill} from './db.js';
 
-const shared ={};
+const s ={};
 
 async function play_data(){
 
     const state    =  await  load_data("state");    
+    const monster  =  await  load_data("monster");    
     const item     =  await  load_data("item");
     const myitem   =  await  load_data("myitem");
     const skill    =  await  load_data("skill");
     const myskill  =  await  load_data("myskill");
 
-    shared.state   =  Setdata(state,);
-    shared.item    =  Setdata(item);
-    shared.myitem  =  Setdata(myitem);
-    shared.skill   =  Setdata(skill);
-    shared.myskill =  Setdata(myskill);
+    s.state   =  Setdata(state);
+    s.monster =  Setdata(monster);
+    s.item    =  Setdata(item);
+    s.myitem  =  Setdata(myitem);
+    s.skill   =  Setdata(skill);
+    s.myskill =  Setdata(myskill);
 }
 
 function Setdata(data){
@@ -120,50 +124,49 @@ function Setdata(data){
 return data;
 }
 
-
 async function updata_item(){
-    if (shared.myitem.length > 0){
-    for(const myitem of shared.myitem){
-    save_item(myitem.item_id,myitem.item_number);
+    if (s.myitem.length > 0){
+        for(const myitem of s.myitem){
+            save_item(myitem.item_id,myitem.item_number);
+        }
     }
-}
 }
 
 async function updata_skill(){
-    if (shared.myskill.length > 0){
-        for(const myskill of shared.myskill){
+    if (s.myskill.length > 0){
+        for(const myskill of s.myskill){
         save_skill(myskill.skill_id);
         }
     }
 }
 
 async function updata_state(){
-    console.log("id"+shared.state[0].monster_id
-    +"gold"+ shared.state[0].my_gold
-    +"day"+ shared.state[0].day
-    +"life"+shared.state[0].life
-    +"hp"+shared.state[0].hp
-    +"atk"+shared.state[0].atk
-    +"def"+shared.state[0].def
-    +"agi"+shared.state[0].agi);
+    console.log("id"+s.state[0].monster_id
+    +"gold"+ s.state[0].my_gold
+    +"day"+ s.state[0].day
+    +"life"+s.state[0].life
+    +"hp"+s.state[0].hp
+    +"atk"+s.state[0].atk
+    +"def"+s.state[0].def
+    +"agi"+s.state[0].agi);
 
-    save_state(shared.state[0].monster_id,
-               shared.state[0].my_gold,
-               shared.state[0].day,
-               shared.state[0].life,
-               shared.state[0].hp,
-               shared.state[0].atk,
-               shared.state[0].def,
-               shared.state[0].agi,
+    save_state(s.state[0].monster_id,
+               s.state[0].my_gold,
+               s.state[0].day,
+               s.state[0].life,
+               s.state[0].hp,
+               s.state[0].atk,
+               s.state[0].def,
+               s.state[0].agi,
     )
 }
 
 //画像の読み込みを行う関数
 function LoadImage()
 {
-    gImgMonster    = new Image(); gImgMonster.src    = gFileMonster;         // モンスター画像読み込み
+    gImgMonster    = new Image(); gImgMonster.src = "img/" + s.monster[s.state[0].monster_id - 1].monster_image;         // モンスター画像読み込み
+    gImgEMonster   = new Image(); gImgMonster.src = "img/" + s.monster[evolution_monster].monster_image;
 }
-
 
 //メニュー画面を取得し、行数と列数を返す関数
 function GetMenu(){
@@ -177,24 +180,50 @@ function GetMenu(){
     }else if(mPhase == 3){
         Cm = restMenu;      Cx = 2; Cy = 2; 
     }else if(mPhase == 4){
-        Cm = shared.item;   Cx = 2;;
-        var i_length  = shared.item.length;
+        Cm = s.item;   Cx = 2;;
+        var i_length  = s.item.length;
         Cy = Math.ceil(i_length / 2);
     }
     else if(mPhase == 5){
-        Cm = shared.myitem; Cx = 2;
+        Cm = s.myitem; Cx = 2;
 
-        var mi_length = shared.myitem.length;
+        var mi_length = s.myitem.length;
         Cy = Math.ceil(mi_length / 2);
     }
     else if(mPhase == 6){
         Cm = SkillMenu;      Cx = 2; Cy = 1; 
     }
     else if(mPhase == 61){
-        Cm = shared.skill; Cx = 2;
+        Cm = s.skill; Cx = 2;
 
-        var ms_length = shared.skill.length;
+        var s_length = s.skill.length;
+        Cy = Math.ceil(s_length / 2);
+    }
+    else if(mPhase == 61.5){
+        var SetSkill_name = [];
+        for(var i=0;i < 4;i++){
+            if(setskill[i] === null){
+                SetSkill_name[i] = "未登録"
+            }else{
+                SetSkill_name[i] = s.skill[setskill[i]].skill_name;
+            }
+        }
+        Cm = SetSkill_name; Cx = 2; Cy = 2;
+    }
+    else if(mPhase == 62.5){
+        Cm = s.myskill; Cx = 2;
+
+        var ms_length = s.myskill.length;
         Cy = Math.ceil(ms_length / 2);
+    }
+    else if(mPhase == 7){
+        Cm = s.monster; Cx = 1;
+
+        var dm_length = s.monster.length;
+        Cy = Math.ceil(dm_length / 2);
+    }
+    else if(mPhase == 71){
+        Cm = ChoiceMenu;      Cx = 2; Cy = 1;
     }
     else if(mPhase == 8){
         Cm = ChoiceMenu;      Cx = 2; Cy = 1;
@@ -203,8 +232,6 @@ function GetMenu(){
         Cm,Cx,Cy
     };
 }
-
-
 
 //ステータスを表示する関数
 function DrawStatus(g)
@@ -215,12 +242,13 @@ function DrawStatus(g)
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
 
-    g.fillText("体力:" + shared.state[0].hp, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
-    g.fillText("　力:" + shared.state[0].atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
-    g.fillText("守り:" + shared.state[0].def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
-    g.fillText("速さ:" + shared.state[0].agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
-}
+    var monster_id = s.state[0].monster_id - 1
 
+    g.fillText("体力:" + s.state[0].hp  * s.monster[monster_id].correction_hp,  WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
+    g.fillText("　力:" + s.state[0].atk * s.monster[monster_id].correction_atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
+    g.fillText("守り:" + s.state[0].def * s.monster[monster_id].correction_def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
+    g.fillText("速さ:" + s.state[0].agi * s.monster[monster_id].correction_agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
+}
 
 //所持金を表示する関数
 function DrawG(g)
@@ -232,7 +260,7 @@ function DrawG(g)
     g.fillStyle = FONTSTYLE                         // 文字色を設定  
 
     g.fillText("所持ゴールド", WIDTH - WIDTH/4.2, HEIGHT/1.8);        
-    g.fillText(shared.state[0].my_gold + "G", WIDTH - WIDTH/4.2, HEIGHT/1.6);           // 所持ゴールドを表示するテキスト
+    g.fillText(s.state[0].my_gold + "G", WIDTH - WIDTH/4.2, HEIGHT/1.6);           // 所持ゴールドを表示するテキスト
 }
 
 //新しいテキストを入力する前にウインドウをリセットする関数
@@ -274,16 +302,27 @@ g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT /
 
 function ItemText(){
     if(mPhase == 4){
-        SetText("何を購入しますか？",shared.item[Cursor-1].item_name,shared.item[Cursor-1].item_text)
+        SetText("何を購入しますか？",s.item[Cursor-1].item_name,s.item[Cursor-1].item_text)
     }
     else if(mPhase == 5){
-        if(shared.myitem.length > 0){
-            SetText("どのアイテムを使いますか？",shared.myitem[Cursor-1].item_name,shared.myitem[Cursor-1].item_text);
+        if(s.myitem.length > 0){
+            SetText("どのアイテムを使いますか？",s.myitem[Cursor-1].item_name,s.myitem[Cursor-1].item_text);
         }else{
             SetText("アイテムを持っていなかった！","お店にアイテムを買いに行こう！",""); 
         }
-    }else if(mPhase == 61){
-        SetText("どの特技を習得しますか？",shared.skill[Cursor-1].skill_name,shared.skill[Cursor-1].skill_text);
+    }
+    else if(mPhase == 61){
+        SetText("どの特技を習得しますか？",s.skill[Cursor-1].skill_name,s.skill[Cursor-1].skill_text);
+    }
+    else if(mPhase == 62.5){
+        if(s.myskill.length > 0){
+        SetText("どのスキルをセットしますか？",s.skill[s.myskill[0].skill_id - 1].skill_name,s.skill[s.myskill[0].skill_id].skill_text);
+        }else{
+        SetText("セットできるスキルが無い！！","","");
+        }
+    }
+    else if(mPhase == 7){
+        SetText("どのモンスターに進化しますか？",s.monster[Cursor-1].monster_name,s.monster[Cursor-1].monster_text);
     }
 }
 
@@ -302,16 +341,18 @@ function DrawShopMenu(g){
         }else if(mPhase === 61){
             name = buy.skill_name;
             var S_count = 0 
-            shared.myskill.forEach(function(ms){
+            s.myskill.forEach(function(ms){
                 if(ms.skill_id === buy.skill_id){
                     price = buy.skill_price;
-                    price = "習得済";
+                    price = "習得済み";
                     S_count += 1
                 }
             });
             if(S_count === 0){
                 price = buy.skill_price
             }
+        }else if(mPhase === 62.5){
+            
         }
         g.fillText(`　${name}:${price}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
         x = x + 1;
@@ -319,28 +360,26 @@ function DrawShopMenu(g){
             x = 0;
             y++;
         }
-        
     });
     g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
 }
-
 
 //ショップ画面での購入処理を行う関数
 function Shop()
 {
     const buy_Item = Cursor - 1;
 
-    const selectedItem = shared.item[buy_Item].item_name;
-    const price        = shared.item[buy_Item].item_price;
+    const selectedItem = s.item[buy_Item].item_name;
+    const price        = s.item[buy_Item].item_price;
 
         console.log("商品名："+ selectedItem +"　値段："+price)
-        if(shared.state[0].my_gold >= price){
+        if(s.state[0].my_gold >= price){
         
             var id = 0
-            if (shared.myitem.length > 0){
-            for(var i=0; shared.myitem.length > i; i++){
-            if(shared.myitem[i].item_id == shared.item[buy_Item].item_id){
-                shared.myitem[i].item_number++,
+            if (s.myitem.length > 0){
+            for(var i=0; s.myitem.length > i; i++){
+            if(s.myitem[i].item_id == s.item[buy_Item].item_id){
+                s.myitem[i].item_number++,
                 id++;
 
                 break;
@@ -348,46 +387,45 @@ function Shop()
         }
     }           
     if(id === 0){
-        shared.myitem.push(
+        s.myitem.push(
             {  
-                item_id      : shared.item[buy_Item].item_id,
+                item_id      : s.item[buy_Item].item_id,
                 item_number  : 1,
-                item_name    : shared.item[buy_Item].item_name,
-                item_effect  : shared.item[buy_Item].item_effect,
-                item_price   : shared.item[buy_Item].item_price,
-                item_text    : shared.item[buy_Item].item_text  
+                item_name    : s.item[buy_Item].item_name,
+                item_effect  : s.item[buy_Item].item_effect,
+                item_price   : s.item[buy_Item].item_price,
+                item_text    : s.item[buy_Item].item_text  
             })
         }
-        console.log(shared.myitem);
-        shared.state[0].my_gold -= price;
+        console.log(s.myitem);
+        s.state[0].my_gold -= price;
         SetText("まいどあり！！","","");
     }else{
         SetText("ゴールドが足りないみたいだ…","","");
     }
 }
 
-
 function SkillShop()
 {
     const buy_Skill = Cursor - 1;
 
-    const selectedSkill = shared.skill[buy_Skill].skill_name;
-    const skillprice        = shared.skill[buy_Skill].skill_price;
+    const selectedSkill = s.skill[buy_Skill].skill_name;
+    const skillprice    = s.skill[buy_Skill].skill_price;
 
         console.log("商品名："+ selectedSkill +"　値段："+ skillprice)
-        if(shared.state[0].my_gold >= skillprice){
-
-        shared.myskill.push(
+        if(s.state[0].my_gold >= skillprice){
+        s.myskill.push(
             {
-                skill_id      : shared.skill[buy_Skill].skill_id,
-                skill_name    : shared.skill[buy_Skill].skill_name,
-                skill_effect  : shared.skill[buy_Skill].skill_effect,
-                skill_price   : shared.skill[buy_Skill].skill_price,
-                skill_text    : shared.skill[buy_Skill].skill_text  
+                skill_id      : s.skill[buy_Skill].skill_id,
+                skill_name    : s.skill[buy_Skill].skill_name,
+                skill_effect  : s.skill[buy_Skill].skill_effect,
+                skill_price   : s.skill[buy_Skill].skill_price,
+                skill_text    : s.skill[buy_Skill].skill_text  
             })
-    console.log(shared.myskill);
-    shared.state[0].my_gold -= price;
-        SetText("また来るがよい");
+    console.log(s.myskill);
+
+    s.state[0].my_gold -= skillprice;
+        SetText("また来るがよい","","");
     }else{
         SetText("お金が足りないみたいだ…","","");
     }
@@ -407,7 +445,7 @@ function ItemCheck(g){
 
     let Menu = GetMenu();
 
-    shared.myitem.forEach(function(myitem){
+    s.myitem.forEach(function(myitem){
 
         g.fillText(`　${myitem.item_name}:${myitem.item_number}個`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
 
@@ -420,14 +458,44 @@ function ItemCheck(g){
 }
 
 function Use_Item(){
-    const selectItem = Cursor - 1;
+    s.myitem[Cursor-1].item_number--;
 
-    shared.myitem[selectItem].item_number--;
+    eval(s.myitem[Cursor-1].item_effect);
 
-    eval(shared.myitem[selectItem].item_effect);
+    if(s.myitem[Cursor-1].item_number <= 0){
+        s.myitem.splice(Cursor-1, 1);
+    }
+}
 
-    if(shared.myitem[selectItem].item_number <= 0){
-        shared.myitem.splice(selectItem, 1);
+function DrawSetSkill(g){
+    g.fillStyle = WNDSTYLE;
+    g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+
+    let x = 0;let y = 0;
+
+    ItemText();
+
+    g.font = FONT; g.fillStyle = FONTSTYLE                    
+
+    let Menu = GetMenu();
+
+    s.myskill.forEach(function(myskill){
+
+        g.fillText(`　${s.skill[myskill.skill_id - 1].skill_name}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
+
+        x = x + 1;
+        if (x >= Menu.Cx) {
+            x = 0; y++;
+        }
+        g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
+    })
+}
+
+function SetSkill(){
+    if(s.myskill.length > 0){
+    setskill[SkillCursor - 1] = s.myskill[Cursor-1].skill_id - 1;
+    console.log(SkillCursor)
+    console.log(setskill)
     }
 }
 
@@ -450,7 +518,7 @@ function Drawgrowth(Cursor)
 {
     var random = RandomUp();
     var chenge = 0;
-    
+
     if(mPhase == 1){
         if(Cursor == 5){
             ChangePhase(0);
@@ -462,16 +530,15 @@ function Drawgrowth(Cursor)
                 } else if (random === '4') {
                     chenge = (Cursor == 1) ?  10 : 3;;
                 }
-            
-                SetText("特訓で"+shared.state[0].monster_name+"の",state_point[Cursor-1]+"が"+chenge+"上がった！！","");
+
+                SetText("特訓で"+s.monster[s.state[0].monster_id-1].monster_name+"の",state_point[Cursor-1]+"が"+chenge+"上がった！！","");
                 console.log(state_point[Cursor-1]);
-                befor_state = shared.state[0][state_point[Cursor-1]];
-                shared.state[0][state_point[Cursor-1]] += chenge;
-                after_state = shared.state[0][state_point[Cursor-1]];
-                shared.state[0].day++;
+                befor_state = s.state[0][state_point[Cursor-1]];
+                s.state[0][state_point[Cursor-1]] += chenge;
+                after_state = s.state[0][state_point[Cursor-1]];
+                s.state[0].day++;
                 DrawLife(-10);
                 ChangePhase(11);
-                
             }
         }
         if(mPhase == 2){
@@ -491,11 +558,11 @@ function Drawgrowth(Cursor)
                 CLife = 50
             }
 
-            SetText(shared.state[0].monster_name+"と働いて"+chenge+"G手に入れた！！",shared.state[0].monster_name+"のスタミナが"+CLife+"下がった","");
-            befor_state = shared.state[0].my_gold;
-            shared.state[0].my_gold += chenge;
-            befor_state = shared.state[0].my_gold;
-            shared.state[0].day++;
+            SetText(s.monster[s.state[0].monster_id - 1].monster_name+"と働いて"+chenge+"G手に入れた！！",s.monster[s.state[0].monster_id - 1].monster_name+"のスタミナが"+CLife+"下がった","");
+            befor_state = s.state[0].my_gold;
+            s.state[0].my_gold += chenge;
+            befor_state = s.state[0].my_gold;
+            s.state[0].day++;
             ChangePhase(21); 
         }
     if(mPhase == 3){
@@ -514,11 +581,55 @@ function Drawgrowth(Cursor)
             restMessage = "500Gを失った…";
             CGold = -500;
         }
-        SetText(shared.state[0].monster_name+"はしっかりと休んだ！",shared.state[0].monster_name+"のスタミナが"+chenge+"回復した",restMessage);
+        SetText(s.monster[s.state[0].monster_id - 1].monster_name+"はしっかりと休んだ！",s.monster[s.state[0].monster_id - 1].monster_name+"のスタミナが"+chenge+"回復した",restMessage);
         DrawLife(chenge);
-        shared.state[0].my_gold += CGold;
-        shared.state[0].day++;
+        s.state[0].my_gold += CGold;
+        s.state[0].day++;
         ChangePhase(31); 
+    }
+}
+
+function DrawEvolution(g){
+
+    g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    g.font = FONT; g.fillStyle = FONTSTYLE;
+
+    let Menu = GetMenu();
+    ItemText();
+
+    let x = 0; let y = 0;let name;
+    Menu.Cm.forEach(function(dm){
+
+            name = dm.monster_name;
+
+        g.fillText(`　${name}:${dm.need_hp}　${dm.need_atk}　${dm.need_def}　${dm.need_agi}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
+        x = x + 1;
+        if (x >= Menu.Cx) {
+            x = 0;
+            y++;
+        }
+    });
+    g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
+}
+
+function Evolution(){
+    const selectmonster = Cursor - 1;
+    const need_state = ["need_hp","need_atk","need_def","need_agi"]
+    let shortage = 0;
+
+    for(var i=0; need_state.length > i; i++){
+        console.log(shortage);
+        if(s.monster[Cursor-1][need_state[i]] > s.state[0][state_point[i]]){
+            shortage++;
+        }
+    }    
+    if(shortage === 0){
+        //s.state[0].monster_id = s.monster[Cursor-1].monster_id
+        evolution_monster = Cursor-1
+        ChangePhase(71);
+    }else{
+        SetText("まだ能力が足りないみたいだ","","");
+        ChangePhase(71.5);
     }
 }
 
@@ -544,7 +655,6 @@ function change_draw(g) {
     alpha -= 0.01;
 }
 
-
 //モンスターを移動させる関数
 function moovMonster(){
     if(randomX != null && randomY != null){
@@ -561,9 +671,10 @@ function moovMonster(){
     }
 }
 
-
 //モンスターを描画する関数
 function DrawMonster(g){
+
+    LoadImage();
 
     g.drawImage(gImgMonster,32 * Monster_number,0, M_WIDTH , M_HEIGHT 
     ,now_placeX ,now_placeY,
@@ -577,34 +688,38 @@ function DrawMonster(g){
     
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
-    g.fillText(shared.state[0].day + "日目",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
+    g.fillText(s.state[0].day + "日目",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
     
     DrawLife(0);
     
     g.fillStyle = "rgba(255,30,30,1)";
-    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * shared.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
-    
+    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * s.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
 }
 
+function DEMonster(g){
+    LoadImage();
+
+    g.drawImage(gImgEMonster,32,0, M_WIDTH , M_HEIGHT 
+    ,WIDTH / 2 ,HEIGHT / 2,
+    WIDTH,HEIGHT);
+
+    console.log("a");
+}
 
 //モンスターのライフバーを描画する関数
 function DrawLife(L_moov)
 {
-    shared.state[0].life = shared.state[0].life + L_moov;
-    if(shared.state[0].life >= 100){
-        shared.state[0].life = 100;
+    s.state[0].life = s.state[0].life + L_moov;
+    if(s.state[0].life >= 100){
+        s.state[0].life = 100;
     }
-    if(shared.state[0].life <= 0){
-        shared.state[0].life = 0;
+    if(s.state[0].life <= 0){
+        s.state[0].life = 0;
     }
 
-    if(shared.state[0].life <= 0){
+    if(s.state[0].life <= 0){
         mPhase = 9; 
     }                                                                                                                             
-}
-
-function day_puls(){
-    shared.state[0].day += 1
 }
 
 function NowCursor(){
@@ -612,9 +727,6 @@ function NowCursor(){
     Cursor = (gCursorY == 0) ? gCursorX + 1 :gCursorY * Menu.Cx + gCursorX+1;
 
     console.log("X="+gCursorX+"：Y="+gCursorY+"：Cursor="+Cursor);
-    console.log(Menu.Cm[Cursor-1]);
-
-    return Cursor;
 }
 
 //ホーム画面を描写する関数
@@ -662,6 +774,20 @@ function DrawHome(g)
     if(mPhase == 61){
         DrawShopMenu(g);
     }
+    if(mPhase == 61.5){
+        DrawMenu(g);
+        SetText("どのスキルを変更しますか？","","");
+    }
+    if(mPhase == 62.5){
+        DrawSetSkill(g);
+    }
+    if(mPhase == 7){
+        DrawEvolution(g);
+    }
+    if(mPhase == 71){
+        DEMonster(g);        DrawMenu(g);
+        SetText("本当に進化させますか？","","");
+    }
     if(mPhase == 8){
         DrawMenu(g);
         SetText("今の状況をセーブしますか？","",""); 
@@ -669,19 +795,10 @@ function DrawHome(g)
     if(mPhase == 9){                                        //体力がなくなった際の処理を行う
         SetText("モンスターの体力が無くなってしまった！","モンスターの能力が下がった。","回復の為に三日間休んだ。")
     }
-    /*if((state[0].day %= 30) == 0){
-        bPhase = 1;
-        Battle();
-    }
-    */
 
     DrawG(g);                                               //所持ゴールドウインドウを描画する関数
     Drawmessage(g);
-
 }
-function Battle(){   
-}
-
 
 function WmPaint() // グラフィック系のファンクション
 {
@@ -693,15 +810,11 @@ function WmPaint() // グラフィック系のファンクション
     g.drawImage(gScreen, 0, 0, gScreen.width, gScreen.height, 0, 0, gWidth, gHeight); // 仮想画面のイメージを実画面へと転送
 }
 
-
-
 function DrawMain() 
 {
     const g = gScreen.getContext("2d");            // 仮想画面の2D描画コンテキスト
     DrawHome(g);
 }
-
-
 
 // ブラウザサイズが変更された際、キャンバスの大きさを変更する
 function WmSize()
@@ -725,13 +838,11 @@ function WmSize()
     }
 }
 
-
 function WmTimer()
 {
     gFrame++;                                  // 内部カウンタを加算
     WmPaint();
 }
-
 
 const M_moov = function(){
 
@@ -788,7 +899,6 @@ window.onkeydown = function (ev) {
         }
     }
     NowCursor();
-
 }
 
 function ChangePhase(m){
@@ -842,7 +952,7 @@ window.onkeyup = function (ev) {
             ChangePhase(0)
         }
         else if(mPhase == 5){
-            if(shared.myitem.length != 0){
+            if(s.myitem.length != 0){
             Use_Item();
             }
             ChangePhase(0);
@@ -860,9 +970,27 @@ window.onkeyup = function (ev) {
             ChangePhase(0);
         }
         else if(mPhase == 61.5){
+            SkillCursor = Cursor;
+            ChangePhase(62.5);
+        }
+        else if(mPhase == 62.5){
+            SetSkill();
+            ChangePhase(0);
         }
         else if(mPhase == 7){
-            
+            Evolution();
+        }
+        else if(mPhase == 71){
+            if(Cursor == 1){
+                s.state[0].monster_id = s.monster[evolution_monster].monster_id
+                console.log(s.state[0].monster_id);
+                ChangePhase(0)
+            }else{
+                ChangePhase(0)    
+            }
+        }
+        else if(mPhase == 71.5){
+            ChangePhase(0);
         }
         else if(mPhase == 8){
             if(gCursorX == 0){
@@ -873,20 +1001,19 @@ window.onkeyup = function (ev) {
             ChangePhase(0);
             return;
         }else if(mPhase == 9){ 
-            shared.state[0].hp   =  Math.floor(shared.state[0].hp  * 0.8);
-            shared.state[0].atk  =  Math.floor(shared.state[0].atk * 0.8);
-            shared.state[0].def  =  Math.floor(shared.state[0].def * 0.8);;
-            shared.state[0].agi  =  Math.floor(shared.state[0].agi * 0.8);;
-            shared.state[0].day  =  shared.state[0].day + 3;
+            s.state[0].hp   =  Math.floor(s.state[0].hp  * 0.8);
+            s.state[0].atk  =  Math.floor(s.state[0].atk * 0.8);
+            s.state[0].def  =  Math.floor(s.state[0].def * 0.8);
+            s.state[0].agi  =  Math.floor(s.state[0].agi * 0.8);
+            s.state[0].day  =  s.state[0].day + 3;
 
-            shared.state[0].life =  50;
+            s.state[0].life =  50;
 
             ChangePhase(0);
             return;
         }
     }
 }
-
 
 button_se.addEventListener('ended', function () {
     isAudioPlaying = false;
@@ -895,7 +1022,7 @@ button_se.addEventListener('ended', function () {
 // ブラウザ起動イベント
 window.onload = function () 
 {
-    LoadImage();
+    //LoadImage()
 
     gScreen = document.createElement("canvas"); // 仮想画面を作成
     gScreen.width = WIDTH;                      // 仮想画面の幅を設定
