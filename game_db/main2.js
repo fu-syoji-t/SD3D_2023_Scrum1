@@ -205,13 +205,13 @@ function LoadImage2()
 {
     gImgMonster    = new Image(); gImgMonster.src    = gFileMonster;         // モンスター画像読み込み
 }
-
 function DrawMymon(g)
 {
     g.fillStyle = WNDSTYLE;         // ウインドウの色
     g.fillRect(WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/2.8);     // 短形描画
 
 }
+
 
 //新しいテキストを入力する前にウインドウをリセットする関数
 function ResetWND(g)
@@ -481,11 +481,11 @@ function DrawHome(g)
     g.fillStyle = MWNDSTYLE;                            
     g.fillRect(0,0,WIDTH - WIDTH /3.9,HEIGHT/1.52);         //モンスターウインドウ
 
-    DrawMymon(g);                                           //自分のモンスターを表示
+    DrawMymon(g);                                     //自分のモンスターを表示
 
     DrawMonster(g);
     DrawMonster2(g);                                //モンスターを描画する関数
-   
+    
     DrawStatus(g);                                          //ステータスウインドウを描画する関数
     //DrawG(g);                                               //所持ゴールドウインドウを描画する関数
 
