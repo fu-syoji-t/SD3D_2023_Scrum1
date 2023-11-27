@@ -11,7 +11,7 @@ session_start();
 <link rel="stylesheet" href="style.css">
 <link href="login2.css" rel="stylesheet" type="text/css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
 <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-<form method="POST"action="login.php">
+<form method="POST"action="index2.php">
 <title>ログイン</title>
 </head>
 <body>
@@ -22,7 +22,7 @@ session_start();
     <div class="login-form">
       <div class="sign-in-htm">
         <div class="group">
-          <label for="user" class="label">Username</label>
+          <label for="user" class="label">UserMail</label>
           <input id="user" type="text" class="input">
         </div>
         <div class="group">
@@ -34,8 +34,9 @@ session_start();
         <label for="sign" class="label">　</label>
           <input type="submit" class="button" value="Sign In">
         </div>
+</form>
         
-        
+<form method="POST"action="ログイン2.php">
       </div>
       <div class="sign-up-htm">
         <div class="group">
@@ -60,6 +61,7 @@ session_start();
         </div>
         <div class="foot-lnk">
           <label for="tab-1">Already Member?</a>
+</form>
         </div>
       </div>
     </div>
