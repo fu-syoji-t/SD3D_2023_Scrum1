@@ -10,7 +10,7 @@ session_start();
 <meta http-equiv="Content-Script-Type" content="text/javascript">
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <link rel="stylesheet" href="style.css">
-<link href="login2.css" rel="stylesheet" type="text/css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+<link href="login.css" rel="stylesheet" type="text/css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
 <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
 <form method="POST"action="login.php">
 <title>ログイン</title>
@@ -23,13 +23,13 @@ session_start();
     <div class="login-form">
       <div class="sign-in-htm">
         <div class="group">
-          <label for="user" class="label">UserMail</label>
-          <input id="user" type="text" class="input" name="mail">
+          <label for="user" class="label"><font color="white">EMail address</font></label>
+          <input id="user" type="text" class="input" name="mail" required>
         </div>
         <!-- パスワード -->
         <div class="group">
-          <label for="pass" class="label">Password</label>
-          <input id="pass" type="password" class="input" name="password" data-type="password">
+          <label for="pass" class="label"><font color="white">Password</font></label>
+          <input id="pass" type="password" class="input" name="password" data-type="password" required>
         </div>
         <div class="hr"></div>
         <div class="group">

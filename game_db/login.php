@@ -26,9 +26,13 @@ try {
     if ($userData['pass'] == password_verify($pass, $userData['pass'])) {
         // 認証成功
         echo 'ログイン成功！';
+        header('Location:index2.php') ;
     } else {
         // 認証失敗
-        echo 'ユーザー名またはパスワードが正しくありません。';
+        echo 'メールアドレスまたはパスワードが正しくありません。';
+        header('Location:ログイン.php') ;
+        $errmsg = (!is_null($pass) and $pass==="")?"メールアドレスまたはパスワードが正しくありません。":"";
+       
     }
 
     // データベース接続を切断
