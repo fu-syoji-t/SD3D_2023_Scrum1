@@ -9,6 +9,7 @@ $password = "root"; // データベースパスワード
 $user = $_POST['mail'];
 $pass = $_POST['password'];
 
+$error_message = "";
 try {
     // データベースに接続
     $db = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
@@ -29,10 +30,9 @@ try {
         header('Location:index2.php') ;
     } else {
         // 認証失敗
-        echo 'メールアドレスまたはパスワードが正しくありません。';
-        header('Location:ログイン.php') ;
-        $errmsg = (!is_null($pass) and $pass==="")?"メールアドレスまたはパスワードが正しくありません。":"";
-       
+        $error_message = "メールアドレスまたはパスワードが一致しません。";
+        // ログインページにエラーメッセージを渡してリダイレクト
+        header('Location:ログイン.php?error=' . urlencode($error_message));
     }
 
     // データベース接続を切断

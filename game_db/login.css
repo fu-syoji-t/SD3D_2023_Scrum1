@@ -1,6 +1,6 @@
 .body{
     margin:0;
-    color:rgb(93, 197, 152);
+    color:rgb(21, 114, 73);
     background:rgb(239, 239, 239);
     font:600 16px/18px 'Open Sans',sans-serif;
   }
@@ -23,7 +23,7 @@
     height:100%;
     position:absolute;
     padding:90px 70px 50px 70px;
-    background:rgba(40,57,101,.9);
+    background:rgba(112, 186, 27, 0.9);
   }
   .login-html .sign-in-htm,
   .login-html .sign-up-htm{
