@@ -1,7 +1,7 @@
-.body{
+body{
     margin:0;
-    color:rgb(21, 114, 73);
-    background:rgb(239, 239, 239);
+    color:#6a6f8c;
+    background:url(background/login.jpg);
     font:600 16px/18px 'Open Sans',sans-serif;
   }
   *,:after,:before{box-sizing:border-box}
@@ -23,7 +23,7 @@
     height:100%;
     position:absolute;
     padding:90px 70px 50px 70px;
-    background:rgba(112, 186, 27, 0.9);
+    background:rgba(40, 101, 58, .9);
   }
   .login-html .sign-in-htm,
   .login-html .sign-up-htm{
@@ -57,7 +57,7 @@
   .login-html .sign-in:checked + .tab,
   .login-html .sign-up:checked + .tab{
     color:#fff;
-    border-color:#eeb311;
+    border-color:#1161ee;
   }
   .login-form{
     min-height:345px;
@@ -121,7 +121,12 @@
     right:0;
     transform:scale(0) rotate(0);
   }
-  
+  .login-form .group .check:checked + label{
+    color:#fff;
+  }
+  .login-form .group .check:checked + label .icon{
+    background:#1161ee;
+  }
   .login-form .group .check:checked + label .icon:before{
     transform:scale(1) rotate(45deg);
   }
