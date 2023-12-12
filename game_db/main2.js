@@ -45,9 +45,8 @@ const WNDSTYLE      = "rgba(0,0,0,0.75)"           //ウインドウの色
 
 const SelectMenu   = [/*"敵が現れた",*/"行動する","逃げる"];
 const ActionMenu = [/*"何をしますか？",*/"戦う","特技","アイテム","やめる"];
-const FightMenu = [/*"何をしますか？",*/"はたく","蹴る","鳴き声","破壊光線"];
-const SpecialMenu = [/**特技のあれを使いますか */"使う","やめる"];
 const NigeMenu =[/*"本当に逃げますか？" */"はい","いいえ"];
+const WinMenu = ["あなたの勝ちです"]
 const TestMenu= ["育成画面に戻る"];
 
 const gKey = new Uint8Array(0x100);                     //キーボード情報を取得
@@ -84,19 +83,35 @@ let randomY = null;                            //モンスターを動かす横�
 let pDogge;
 let eDogge;
 let random; 
+let enemyrandom;
+let randomskill;
+let critical;
+let rmin = 0;
+let rmax = 3;
 let min = 1;
 let max = 100;
 let dmg;
+let teacher = 0;
 
-let mHp
-let eHp
+let mHp;
+let eHp; 
+let mAtk;
+let mDef;
+let mAgi;
+let eAtk;
+let eDef;
+let eAgi;
+let count = {}; 
+let Icount = {};
+let cursor;
+let skillcursor;
+
+let turn = 1;
 
 
 import{load_data,save_item,save_state} from './db.js';
 
-const shared ={};
-
-
+const s ={};
 
 async function play_data(){
 
@@ -104,13 +119,32 @@ async function play_data(){
     const item   =  await  load_data("item");
     const myitem =  await  load_data("myitem");
     const enemy  =  await  load_data("enemy");
+    const myskill = await  load_data("myskill");
+    const enemyskill = await load_data("enemyskill");
 
-    shared.state = Setdata(state,);
-    shared.item = Setdata(item);
-    shared.myitem = Setdata(myitem);
-    shared.enemy = Setdata(enemy);
+    s.state = Setdata(state);
+    s.item = Setdata(item);
+    s.myitem = Setdata(myitem);
+    s.enemy = Setdata(enemy);
+    s.myskill = Setdata(myskill);
+    s.enemyskill = Setdata(enemyskill);
 
-    console.log(state);
+    mHp = s.state[0].hp;
+    eHp = s.enemy[0].enemy_hp;
+
+    mAtk = s.state[0].atk;
+    mDef = s.state[0].def;
+    mAgi = s.state[0].agi;
+
+    eAtk = s.enemy[0].enemy_atk;
+    eDef = s.enemy[0].enemy_def;
+    eAgi = s.enemy[0].enemy_agi;
+
+    count = [s.myskill[0].skill_count,s.myskill[1].skill_count,s.myskill[2].skill_count,s.myskill[3].skill_count];
+    Icount = [s.myitem[0].item_number,s.myitem[1].item_number,s.myitem[2].item_number,//s.myitem[3].item_number
+]
+
+    console.log(s.state);
 }
 
 function Setdata(data){
@@ -133,31 +167,31 @@ return data;
 
 
 async function updata_item(){
-    if (shared.myitem.length > 0){
-    for(const myitem of shared.myitem){
+    if (s.myitem.length > 0){
+    for(const myitem of s.myitem){
         console.log(myitem.item_name);
     save_item(myitem.item_id,myitem.item_number);
     }
 }
 }
 async function updata_state(){
-    console.log("id"+shared.state[0].monster_id
-    +"gold"+ shared.state[0].my_gold
-    +"day"+ shared.state[0].day
-    +"life"+shared.state[0].life
-    +"hp"+shared.state[0].hp
-    +"atk"+shared.state[0].atk
-    +"def"+shared.state[0].def
-    +"agi"+shared.state[0].agi);
+    console.log("id"+s.state[0].monster_id
+    +"gold"+ s.state[0].my_gold
+    +"day"+ s.state[0].day
+    +"life"+s.state[0].life
+    +"hp"+s.state[0].hp
+    +"atk"+s.state[0].atk
+    +"def"+s.state[0].def
+    +"agi"+s.state[0].agi);
 
-    save_state(shared.state[0].monster_id,
-               shared.state[0].my_gold,
-               shared.state[0].day,
-               shared.state[0].life,
-               shared.state[0].hp,
-               shared.state[0].atk,
-               shared.state[0].def,
-               shared.state[0].agi,
+    save_state(s.state[0].monster_id,
+               s.state[0].my_gold,
+               s.state[0].day,
+               s.state[0].life,
+               s.state[0].hp,
+               s.state[0].atk,
+               s.state[0].def,
+               s.state[0].agi,
     )
 }
 
@@ -176,12 +210,20 @@ function GetMenu(){
         Cm = SelectMenu;    Cx = 2; Cy = 1; 
     }else if(mPhase == 1){
         Cm = ActionMenu;  Cx = 4; Cy = 1;
-    }else if(mPhase == 3){
-        Cm = FightMenu;  Cx = 4; Cy = 1;
-    }else if(mPhase == 3){
-        Cm = SpecialMenu;  Cx = 4; Cy = 1;
-    }else if(mPhase == 2){
+    }else if(mPhase == 2){//逃げるを選択
         Cm = NigeMenu;  Cx = 2; Cy = 1;
+    }else if(mPhase == 4){
+        Cm = [/*"何をしますか？",*/s.myskill[0].skill_name + " " + count[0] + "/" + s.myskill[0].skill_count,
+                                s.myskill[1].skill_name + " " + count[1] + "/" + s.myskill[1].skill_count,
+                                s.myskill[2].skill_name + " " + count[2] + "/" + s.myskill[2].skill_count,
+                                s.myskill[3].skill_name + " " + count[3] + "/" + s.myskill[3].skill_count];  Cx = 2; Cy = 2;
+    }else if(mPhase == 5){
+        Cm = [s.myitem[0].item_name + " " + Icount[0],
+            s.myitem[1].item_name + " " + Icount[1],
+            s.myitem[2].item_name + " " + Icount[2],
+            //s.myitem[3].item_name + " " + Icount[3]
+        ]; Cx = 2; Cy = 2;
+
     }
     return {
         Cm,Cx,Cy
@@ -198,11 +240,12 @@ function DrawStatus(g)
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
 
-    g.fillText("体力:" + shared.enemy[0].enemy_hp, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
-    g.fillText("力:" + shared.enemy[0].enemy_atk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
-    g.fillText("守り:" + shared.enemy[0].enemy_def, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
-    g.fillText("速さ:" + shared.enemy[0].enemy_agi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
+    g.fillText("体力:" + mHp, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 0);             // Lv
+    g.fillText("力:" + mAtk, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 1);             // HP
+    g.fillText("守り:" + mDef, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 2);             // 経験値
+    g.fillText("速さ:" + mAgi, WIDTH-WIDTH/5, HEIGHT/5 + HEIGHT/13 * 3);             // 経験値
 }
+
 
 //新しいテキストを入力する前にウインドウをリセットする関数
 function ResetWND(g)
@@ -217,8 +260,9 @@ function DrawMymon(g)
     g.fillRect(WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/2.8);     // 短形描画
 
 }
-//メニュー画面を描画する関数
 
+
+//メニュー画面を描画する関数
 function DrawMenu(g)
 {
     let Menu = GetMenu();
@@ -288,7 +332,7 @@ function ItemCheck(g){
 
 
 
-    shared.myitem.forEach(function(myitem){
+    s.myitem.forEach(function(myitem){
 
         g.fillText(`　${myitem.item_name}:${myitem.item_number}個`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
 
@@ -306,18 +350,18 @@ function ItemCheck(g){
 function Use_Item(){
     let Select_Item = (gCursorY == 0) ? gCursorX :gCursorY * 2 + gCursorX;
     console.log(Select_Item);
-    console.log(shared.myitem[Select_Item].item_name);
-    console.log(shared.myitem[Select_Item].item_effect);
-    console.log(shared.state[0].life);
-    shared.myitem[Select_Item].item_number--;
+    console.log(s.myitem[Select_Item].item_name);
+    console.log(s.myitem[Select_Item].item_effect);
+    console.log(s.state[0].life);
+    s.myitem[Select_Item].item_number--;
 
-    const item_result = eval(shared.myitem[Select_Item].item_effect);
+    const item_result = eval(s.myitem[Select_Item].item_effect);
 
 
-    console.log(shared.state[0].life);
+    console.log(s.state[0].life);
 
-    if(shared.myitem[Select_Item].item_number <= 0){
-        shared.myitem.splice(Select_Item, 1);
+    if(s.myitem[Select_Item].item_number <= 0){
+        s.myitem.splice(Select_Item, 1);
     }
 }
 
@@ -370,12 +414,12 @@ function DrawMonster(g){
     
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
-    g.fillText(shared.state[0].day + "ターン",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
+    g.fillText(turn + "ターン",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
     
     DrawLife(0);
     
     g.fillStyle = "rgba(255,30,30,1)";
-    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * shared.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
+    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * s.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
     
 }
 
@@ -383,86 +427,394 @@ function DrawMonster(g){
 //モンスターのライフバーを描画する関数
 function DrawLife(L_moov)
 {
-    shared.state[0].life = shared.state[0].life + L_moov;
-    if(shared.state[0].life >= 100){
-        shared.state[0].life = 100;
+    if(s.state != null){
+    s.state[0].life = s.state[0].life + L_moov;
+    if(s.state[0].life >= 100){
+        s.state[0].life = 100;
     }
-    if(shared.state[0].life <= 0){
-        shared.state[0].life = 0;
+    if(s.state[0].life <= 0){
+        s.state[0].life = 0;
     }
 
-    if(shared.state[0].life <= 0){
+    if(s.state[0].life <= 0){
         mPhase = 9; 
+    }
     }                                                                                                                             
 }
 
 function gAttack(){
-    SetText("味方のモンスターの攻撃！","","") 
     random = Math.floor(Math.random() * (max - min) + min);
+    critical = Math.floor(Math.random() * (max - min) + min);
     //console.log(random);
-    if((95 - eDogge) >= random){
-        console.log("命中")
-        dmg = Math.ceil((shared.state[0].atk * 20) / shared.enemy[0].enemy_def);
-        eHp -= dmg;
+    if((95 - pDogge) >= random){
+        SetText("命中","","")
+        if(7 >= critical){
+            dmg = Math.ceil((s.state[0].atk * 0.5) - (s.enemy[0].enemy_def / 3)) * 2;
+            if(dmg < 0){
+                dmg = 1;
+            }
+            SetText("味方のモンスターの攻撃！","クリティカル！",dmg + "のダメージ与えた！")
+        }else{
+            dmg = Math.ceil((s.state[0].atk * 0.5) - (s.enemy[0].enemy_def / 3));
+            if(dmg < 0){
+                dmg = 1;
+            }
+            SetText("味方のモンスターの攻撃！",dmg + "のダメージ与えた！","") 
+        }
+            eHp -= dmg;
     }else{
         dmg = 0;
-        console.log("当たらなかった！")
+        SetText("ミス！","攻撃が当たらなかった！","")
     }
         console.log("ダメージ数：" + dmg);
+        console.log("味方のHP:" + mHp);
 
 }
 
 function eAttack(){
-    SetText("敵のモンスターの攻撃！","","") 
     random = Math.floor(Math.random() * (max - min) + min);
+    critical = Math.floor(Math.random() * (max - min) + min);
     //console.log(random);
     if((95 - pDogge) >= random){
-        console.log("命中")
-        dmg = Math.ceil((shared.enemy[0].enemy_atk * 20) / shared.state[0].def);
-        mHp -= dmg;
+        SetText("命中","","")
+        if(7 >= critical){
+            dmg = Math.ceil((s.enemy[0].enemy_atk * 0.5) - (s.state[0].def  / 3)) * 2;
+            if(dmg < 0){
+                dmg = 1;
+            }
+            SetText("敵のモンスターの攻撃！","クリティカル！",dmg + "のダメージ受けた！")
+        }else{
+            dmg = Math.ceil((s.enemy[0].enemy_atk * 0.5) - (s.state[0].def  / 3));
+            if(dmg < 0){
+                dmg = 1;
+            }
+            SetText("敵のモンスターの攻撃！",dmg + "のダメージ受けた！","") 
+        }
+            mHp -= dmg;
     }else{
         dmg = 0;
-        console.log("当たらなかった！")
+        SetText("ミス！","攻撃が当たらなかった！","")
     }
         console.log("ダメージ数：" + dmg);
+        console.log("味方のHP:" + mHp);
+
 }
 
 function bAttack(){
-    if(shared.state[0].agi < shared.enemy[0].enemy_agi){
-        eDogge = (shared.enemy[0].enemy_agi - shared.state[0].agi) * 0.1;
+    enemyrandom = Math.floor(Math.random() * (max - min) + min);
+    if(s.state[0].agi < s.enemy[0].enemy_agi){
+        eDogge = (s.enemy[0].enemy_agi - s.state[0].agi) * 0.1;
         pDogge = 0;
     }else{
-        pDogge = (shared.state[0].agi - shared.enemy[0].enemy_agi) * 0.1;
+        pDogge = (s.state[0].agi - s.enemy[0].enemy_agi) * 0.1;
         eDogge = 0;
     }
-
-    if(shared.state[0].agi < shared.enemy[0].enemy_agi){
-        eAttack();
-        /*
-        if(gHP > 0){
+    if(teacher === 0){
+        if(s.state[0].agi < s.enemy[0].enemy_agi){ // どちらの素早さが速いか比較し、速い方から行動する
+            SetText("敵の攻撃！","","");
+            if(enemyrandom <= 50){
+                eAttack();
+            }else{
+                eSkillAttack();
+            }
+            if(mHp < 0){
+                console.log("あなたの負けです…");
+            }
+            /*
+            console.log("味方の攻撃！");
+            gSkillAttack();
+            if(eHp < 0){
+                console.log("あなたの勝ちです！");
+            }
+            */
+            teacher = 1
+            mPhase = 36;
+        //}
+        }else if(s.state[0].agi >= s.enemy[0].enemy_agi){
+            console.log("味方の攻撃！");
             gAttack();
+            if(eHp < 0){
+                console.log("あなたの勝ちです！");
+            }
+            /*
+            console.log("敵の攻撃！");
+            eSkillAttack();
+            if(mHp < 0){
+                console.log("あなたの負けです…");
+            }
+            */
+            teacher = 2;
+            mPhase = 36;
         }
-        */
-        gAttack();
-        /*
-        if(eHP > 0){
-            eAttack();
+        //}
+    }else if(teacher === 1){
+            console.log("味方の攻撃！");
+            gAttack();
+            if(eHp < 0){
+                console.log("あなたの勝ちです！");
+            }
+            /*
+            console.log("敵の攻撃！");
+            eSkillAttack();
+            if(mHp < 0){
+                console.log("あなたの負けです…");
+            }
+            */
+            teacher = 0
+            turn_puls();
+            
+        }else if(teacher === 2){
+            SetText("敵の攻撃！","","");
+            if(enemyrandom <= 50){
+                eAttack();
+            }else{
+                eSkillAttack();
+            }
+            if(mHp < 0){
+                console.log("あなたの負けです…");
+            }
+            /*
+            console.log("味方の攻撃！");
+            gSkillAttack();
+            if(eHp < 0){
+                console.log("あなたの勝ちです！");
+            }
+            */
+            teacher = 0
+            turn_puls();
         }
-        */
     }
-    /*
-    if(eHP <= 0 || gHP <= 0){
-        console.log("バトル終了！")
+function gSkillAttack(){
+    //cursor = skillcursor;
+    if(s.myskill[cursor].skill_type == 2){
+        if(s.state[0].hp  <= mHp + s.myskill[cursor].skill_power){
+            SetText("味方のモンスターの" + s.myskill[cursor].skill_name + "!","HPが全快した！","");
+            mHp = s.state[0].hp;
+        }else{
+            SetText("味方のモンスターの" + s.myskill[cursor].skill_name + "!","HPが" + s.myskill[cursor].skill_power + "回復した！","");
+            mHp += s.myskill[cursor].skill_power;
+        }
+    }else if(s.myskill[cursor].skill_type == 3){
+        mAtk = Math.ceil(mAtk * (1 + (s.myskill[cursor].skill_power / 100)));
+        SetText("味方のモンスターの" + s.myskill[cursor].skill_name + "!","攻撃力が" + (mAtk - s.state[0].atk) + "上がった！","");
+    }else{
+        SetText("味方のモンスターの攻撃！","","") 
+        random = Math.floor(Math.random() * (max - min) + min);
+        critical = Math.floor(Math.random() * (max - min) + min);
+    //console.log(random);
+        if((s.myskill[cursor].skill_dex - eDogge) >= random){
+            console.log("命中")
+            if(7 >= critical){
+                dmg = Math.ceil((((1 + (s.myskill[cursor].skill_power / 100)) * mAtk)  * 0.5) - (s.enemy[0].enemy_def / 3)) * 2;
+                if(dmg < 0){
+                    dmg = 1;
+                }
+                SetText("味方のモンスターの" + s.myskill[cursor].skill_name + "!","クリティカル！",dmg + "のダメージ与えた！")
+
+                eHp -= dmg;
+                mPhase = 10;
+            }else{
+                dmg = Math.ceil((((1 + (s.myskill[cursor].skill_power / 100)) * mAtk)  * 0.5) - (s.enemy[0].enemy_def / 3));
+                if(dmg < 0){
+                    dmg = 1;
+                }
+                SetText("味方のモンスターの"+ s.myskill[cursor].skill_name + "!",dmg + "のダメージ与えた！","")
+                eHp -= dmg;
+                mPhase = 10;
+            }
+        }else{
+            dmg = 0;
+            SetText("ミス！","攻撃が当たらなかった！","")
+        }
     }
-    */
+        console.log("ダメージ数：" + dmg);
+        console.log("味方の体力：" + mHp);
+        console.log("敵のHP:" + eHp);
+        console.log(mAtk);
+        console.log("現在のカーソル:" + cursor);
+        count[cursor] -= 1;
+        console.log("スキル回数："+ count[cursor])
+
 }
 
-function day_puls(){
-    shared.state[0].day += 1
+function eSkillAttack(){
+    randomskill = parseInt(Math.random() * 4);
+    if(s.enemyskill[randomskill].skill_type == 2){
+        if(s.enemy[0].enemy_hp  <= eHp + s.enemyskill[randomskill].skill_power){
+            SetText("敵のモンスターの" + s.enemyskill[randomskill].skill_name + "!","HPが" + s.enemyskill[randomskill].skill_power + "回復した！","");
+            eHp = s.enemy[0].enemy_hp;
+        }else{
+            SetText("敵のモンスターの" + s.enemyskill[randomskill].skill_name + "!","HPが" + s.enemyskill[randomskill].skill_power + "回復した！","");
+            eHp += s.myskill[randomskill].skill_power;
+        }
+    }else if(s.enemyskill[randomskill].skill_type == 3){
+        eAtk = Math.ceil(eAtk * (1 + (s.enemyskill[randomskill].skill_power / 100)));
+        SetText("敵のモンスターの" + s.enemyskill[randomskill].skill_name + "!","攻撃力が" + (eAtk - s.enemy[0].enemy_atk) + "上がった！","");
+    }else{
+        SetText("敵のモンスターの攻撃！","","") 
+        random = Math.floor(Math.random() * (max - min) + min);
+        critical = Math.floor(Math.random() * (max - min) + min);
+    //console.log(random);
+        if((s.enemyskill[randomskill].skill_dex - eDogge) >= random){
+            console.log("命中")
+            if(7 >= critical){
+                dmg = Math.ceil((((1 + (s.enemyskill[randomskill].skill_power / 100)) * eAtk)  * 0.5) - (s.state[0].def / 3)) * 2;
+                if(dmg < 0){
+                    dmg = 1;
+                }
+                SetText("敵のモンスターの" + s.enemyskill[randomskill].skill_name + "!","クリティカル！",dmg + "のダメージ受けた！")
+
+                mHp -= dmg;
+                mPhase = 10;
+            }else{
+                dmg = Math.ceil((((1 + (s.enemyskill[randomskill].skill_power / 100)) * eAtk)  * 0.5) - (s.state[0].def / 3));
+                if(dmg < 0){
+                    dmg = 1;
+                }
+                SetText("敵のモンスターの"+ s.enemyskill[randomskill].skill_name + "!",dmg + "のダメージ受けた！","")
+                mHp -= dmg;
+                mPhase = 10;
+            }
+        }else{
+            dmg = 0;
+            SetText("ミス！","攻撃が当たらなかった！","")
+        }
+    }
+        console.log("ダメージ数：" + dmg);
+        console.log("味方の体力：" + mHp);
+        console.log("敵のHP:" + eHp);
+        console.log(mAtk);
+        console.log("現在のカーソル:" + cursor);
+        skillcursor = cursor;
+        
+        
+
+}
+
+function bSkillAttack(){
+    random = Math.floor(Math.random() * (max - min) + min);
+    //if(count[cursor] == 0){
+      //  ChangePhase(50);
+    //}else{
+        if(s.state[0].agi < s.enemy[0].enemy_agi){
+            eDogge = (s.enemy[0].enemy_agi - s.state[0].agi) * 0.1;
+            pDogge = 0;
+        }else{
+            pDogge = (s.state[0].agi - s.enemy[0].enemy_agi) * 0.1;
+            eDogge = 0;
+        }
+    
+        if(teacher === 0){
+            if(s.state[0].agi < s.enemy[0].enemy_agi){ // どちらの素早さが速いか比較し、速い方から行動する
+            //if(count[cursor] == 0){
+                ChangePhase(50);
+            //}else{
+            SetText("敵の攻撃！","","");
+            if(eHp < 0){
+                ChangePhase(56);
+            }else{
+                if(enemyrandom <= 50){
+                    eAttack();
+                }else{
+                    eSkillAttack();
+                }
+            /*else{
+                console.log("味方の攻撃！");
+                gSkillAttack();
+            }
+            if(eHp < 0){
+                console.log("あなたの勝ちです！");
+                ChangePhase(56);
+            }else
+            */
+                    teacher = 1
+                    mPhase = 41;
+            }
+        }
+        }else if(s.state[0].agi >= s.enemy[0].enemy_agi){
+            //if(count[cursor] == 0){
+            //ChangePhase(50);
+            //}else{
+            if(mHp < 0){
+                console.log("あなたの負けです…");
+                ChangePhase(56);
+            }else{
+                console.log("味方の攻撃！");
+                gSkillAttack();
+                if(eHp < 0){
+                    console.log("あなたの勝ちです！");
+                    ChangePhase(55);
+                }else{
+                    teacher = 2;
+                    mPhase = 41;
+                }
+            }
+            /*else{
+                console.log("敵の攻撃！");
+                eSkillAttack();
+            */
+    }else if(teacher === 1){
+        console.log("味方の攻撃！");
+        if(mHp < 0){
+            console.log("あなたの負けです…");
+        }else{
+            gSkillAttack();
+                if(eHp < 0){
+                    console.log("あなたの勝ちです！");
+                    ChangePhase(55);
+                }else{
+        /*}else{
+            console.log("敵の攻撃！");
+            eSkillAttack();
+        */
+                teacher = 0
+                turn_puls();
+            }
+        } 
+    }else if(teacher === 2){
+        SetText("敵の攻撃！","","");
+        if(eHp < 0){
+            console.log("あなたの勝ちです！");
+            ChangePhase(56);
+        }else{
+            if(enemyrandom <= 50){
+                eAttack();
+            }else{
+                eSkillAttack();
+            }
+            if(mHp < 0){
+                ChangePhase(55);
+            }else{
+        /*else{  
+            console.log("味方の攻撃！");
+            gSkillAttack();
+        */
+                teacher = 0
+                turn_puls();
+            }
+
+        }
+            
+        }
+    //}
+    console.log(s.myskill[cursor].skill_name);
+}
+
+function turn_puls(){
+    turn += 1;
+}
+
+function CountCheck(){
+    cursor = Cursor-1;
+    if(count[cursor] == 0){
+        mPhase = 50;
+        console.log("ここはカウントチェックの場所です")
+    }
 }
 
 function NowCursor(){
     var Menu = GetMenu();
+    //cursor = Cursor-1;
     Cursor = (gCursorY == 0) ? gCursorX + 1 : gCursorY * Menu.Cx + gCursorX + 1
 }
 
@@ -499,15 +851,38 @@ function DrawHome(g)
     if(mPhase == 2){
 
         DrawMenu(g);
-        SetText("本当に逃げますか？","","");
-        /*
-        bAttack();
-        SetText(g,"通常攻撃！","","")                 //逃げるを選択した時の処理
-        */
+        SetText("本当に逃げますか？","","");               //逃げるを選択した時の処理
     }
     if(mPhase == 3){
+       SetText("あなたの攻撃です","敵に1000ダメージ","")                 //攻撃を選択した時の処理
+       
+    }
+    if(mPhase == 4){
         DrawMenu(g);
-        SetText("あなたの負けです","","")                 //逃げるを選択した時の処理
+        SetText("どの特技を使いますか","","")                 //特技を選択した時の処理
+    }
+    if(mPhase == 5){
+        DrawMenu(g);
+        SetText("どのアイテムを使いますか","","")                 //アイテムを選択した時の処理
+    }if(mPhase == 6){
+        mPhase = 0;                //やめるを選択した時の処理                 //やめるを選択した時の処理
+    }if(mPhase == 7){
+        DrawMenu(g);
+        SetText("あなたの勝ちです","","")                 //やめるを選択した時の処理
+    }if(mPhase == 8){
+        DrawMenu(g);
+        SetText("あなたの負けです","","")                 //やめるを選択した時の処理
+    }if(mPhase == 10){
+        SetText("味方のモンスターの攻撃！","クリティカル！",dmg + "のダメージ与えた！");
+    }if(mPhase == 50){
+        console.log("もう無いよ！！");
+        console.log("現在のスキル：" + s.myskill[cursor].skill_name);
+        console.log("スキルの残り回数" + count[cursor]);
+        SetText("この技はもう使用できません！","","");
+    }if(mPhase == 55){
+        SetText("味方のモンスターが倒れた！","残念...貴方の負けです...","");
+    }if(mPhase == 56){
+        SetText("敵のモンスターが倒れた！","おめでとう！貴方の勝ちです！","");
     }
     Drawmessage(g);
 }
@@ -516,7 +891,7 @@ function DrawHome(g)
 
 function DrawMonster2(g){
     g.fillStyle = "rgba(255,30,30,1)";
-    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * shared.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
+    g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * s.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
 
     g.drawImage(gImgMonster,Monster_number-1,0, M_WIDTH , M_HEIGHT,760, HEIGHT/1.9, WIDTH/6, HEIGHT/4,
     WIDTH/5,HEIGHT/5);
@@ -638,7 +1013,7 @@ function ChangePhase(m){
     mPhase = m;
     gCursorX = 0;
     gCursorY = 0;
-
+    cursor = Cursor-1;
     NowCursor();
 }
 
@@ -665,27 +1040,79 @@ window.onkeyup = function (ev) {
         }
         else if(mPhase == 1){
             if(Cursor == 1){
-                bAttack();
-                ChangePhase(3);
+                ChangePhase(35);
             }else if(Cursor == 2){
                 ChangePhase(4);
             }else if(Cursor == 3){
                 ChangePhase(5);
             }else if(Cursor == 4){
                 ChangePhase(6);
+            }else if(Cursor == 2){
+                ChangePhase(8);
             }
             /*
             mPhase = 1;
             gCursorX = 1;
             gCursorY = 0;
             */
+        }else if(mPhase == 2){
+        }else if(mPhase == 3){
+            ChangePhase(7);
+        }else if(mPhase == 4){
+            console.log("攻撃！");
+            console.log(Cursor-1);
+            if(count[Cursor-1] == 0){
+                ChangePhase(50)
+            }else{
+                bSkillAttack();
+            }
+        }else if(mPhase == 35){
+            bAttack();
+        }else if(mPhase == 36){
+            bAttack();
+            mPhase = 37;
+        }else if(mPhase == 37){
+            if(mHp < 0){
+                ChangePhase(55);
+            }else if(eHp < 0){
+                ChangePhase(56);
+            }else{
+                ChangePhase(1);
+            }
+        }else if(mPhase == 41){
+            console.log("反撃！");
+            //CountCheck();
+            bSkillAttack();
+            mPhase = 42;
+        }else if(mPhase == 42){
+            console.log("休憩２！");
+            if(mHp < 0){
+                ChangePhase(55);
+            }else if(eHp < 0){
+                ChangePhase(56);
+            }else{
+                ChangePhase(1);
+            }
+        }else if(mPhase == 50){
+            if(mHp < 0){
+                ChangePhase(55);
+            }else if(eHp < 0){
+                ChangePhase(56);
+            }else{
+                ChangePhase(1);
+            }
+        }else if(mPhase == 55){
+            ChangePhase(1);
+        }else if(mPhase == 56){
+            ChangePhase(1);
         }
-        else if(mPhase == 2){
-            
+        else if(mPhase == 10){ // 味方の攻撃でクリティカルが出た場合
+            ChangePhase(4);
         }
-        
     }
+    console.log(teacher);
     console.log(Cursor);
+    console.log(mPhase);
 }
 
 
