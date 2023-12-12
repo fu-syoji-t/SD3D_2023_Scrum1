@@ -1,3 +1,4 @@
+
 "use strict";
 
 const M_HEIGHT = 32;                      //モンスターチップの幅
@@ -50,6 +51,7 @@ const gKey = new Uint8Array(0x100);                     //キーボード情報�
 const audio = new Audio('BGM/MusMus-BGM-033.mp3');      //BGMを取得
 const button_se = new Audio('SE/音人ボタン音47.mp3');   //ボタンを押した際のSEを取得
 
+let random_skill = []
 
 let isAudioPlaying = false;                             //SEが再生中かどうかを判定する
 
@@ -57,17 +59,20 @@ let gMessage1 = null;
 let gMessage2 = null;
 let gMessage3 = null;
 
-let setskill = [null,null,null,0];
 let SkillCursor
 
 let Cursor = 0;
+let befor_Phase = 0;
 let gCursorX = 0;                              //カーソルの横位置                      
 let gCursorY = 0;                              //カーソルの縦位置
 let gFrame = 0;                                //内部カウンタ
 let gWidth;                                    //実画面の幅
 let gHeight;                                   //実画面の高さ
 let gImgMonster;                               //画像。テスト
-let gImgEMonster
+let gImgEMonster;
+let gImgHaikei;
+let gImgWindow;
+let gImgMWindow;
 let Monster_number = 0;                        //モンスターの番号
 let gScreen;                                   //仮想画面
 let gIsKeyDown = {};                           //キーが押されているかどうかを示すオブジェクト
@@ -76,8 +81,11 @@ let bPhase = 0;                                //戦闘画面のフェーズ
 
 let CLife = 0;
 let CGold = 0;
-let ShopFlag = "";
 let evolution_monster = 0;
+
+let color_change = 0
+let color_return = 0
+let change_ok    = 0
 
 let now_placeX = Start_placeX;                 //現在のモンスターの縦位置
 let now_placeY = Start_placeY;                 //現在のモンスターの横位置 
@@ -93,7 +101,7 @@ const s ={};
 
 async function play_data(){
 
-    const state    =  await  load_data("state");    
+    const state    =  await  load_data("state");        
     const monster  =  await  load_data("monster");    
     const item     =  await  load_data("item");
     const myitem   =  await  load_data("myitem");
@@ -106,6 +114,9 @@ async function play_data(){
     s.myitem  =  Setdata(myitem);
     s.skill   =  Setdata(skill);
     s.myskill =  Setdata(myskill);
+
+
+    daypuls(0);
 }
 
 function Setdata(data){
@@ -135,7 +146,7 @@ async function updata_item(){
 async function updata_skill(){
     if (s.myskill.length > 0){
         for(const myskill of s.myskill){
-        save_skill(myskill.skill_id);
+        save_skill(myskill.skill_id,myskill.skill_set);
         }
     }
 }
@@ -164,69 +175,80 @@ async function updata_state(){
 //画像の読み込みを行う関数
 function LoadImage()
 {
-    gImgMonster    = new Image(); gImgMonster.src = "img/" + s.monster[s.state[0].monster_id - 1].monster_image;         // モンスター画像読み込み
-    gImgEMonster   = new Image(); gImgMonster.src = "img/" + s.monster[evolution_monster].monster_image;
+    gImgMonster     = new Image(); gImgMonster.src    = "img/" + s.monster[s.state[0].monster_id - 1].monster_image;         // モンスター画像読み込み
+    gImgEMonster    = new Image(); gImgEMonster.src   = "img/" + s.monster[evolution_monster].monster_image;
+    gImgWindow      = new Image(); gImgWindow.src     = "img/m_window2.png"
+    gImgHaikei      = new Image(); gImgHaikei.src     = "img/haikei5.jpg"
+    gImgMWindow     = new Image(); gImgMWindow.src    = "img/monsterwindow2.png"
+
 }
 
 //メニュー画面を取得し、行数と列数を返す関数
 function GetMenu(){
     let Cm=0;let Cx=0; let Cy=0;
-    if(mPhase == 0){
-        Cm = SelectMenu;    Cx = 4; Cy = 2; 
-    }else if(mPhase == 1){
-        Cm = TrainingMenu;  Cx = 4; Cy = 2;
-    }else if(mPhase == 2){
-        Cm = WorkMenu;      Cx = 2; Cy = 2; 
-    }else if(mPhase == 3){
-        Cm = restMenu;      Cx = 2; Cy = 2; 
-    }else if(mPhase == 4){
-        Cm = s.item;   Cx = 2;;
-        var i_length  = s.item.length;
-        Cy = Math.ceil(i_length / 2);
-    }
-    else if(mPhase == 5){
-        Cm = s.myitem; Cx = 2;
+    switch(mPhase){
+        case 0:
+            Cm = SelectMenu;    Cx = 4; Cy = 2; 
+            break;
+        case 1:
+            Cm = TrainingMenu;  Cx = 4; Cy = 2;
+            break;
+        case 2:
+            Cm = WorkMenu;      Cx = 2; Cy = 2; 
+            break;
+        case 3:
+            Cm = restMenu;      Cx = 2; Cy = 2; 
+            break;
+        case 4:
+            Cm = s.item;   Cx = 2;;
+            var i_length  = s.item.length;
+            Cy = Math.ceil(i_length / 2);
+            break;
+        case 5:
+            Cm = s.myitem; Cx = 2;
 
-        var mi_length = s.myitem.length;
-        Cy = Math.ceil(mi_length / 2);
-    }
-    else if(mPhase == 6){
-        Cm = SkillMenu;      Cx = 2; Cy = 1; 
-    }
-    else if(mPhase == 61){
-        Cm = s.skill; Cx = 2;
-
-        var s_length = s.skill.length;
-        Cy = Math.ceil(s_length / 2);
-    }
-    else if(mPhase == 61.5){
-        var SetSkill_name = [];
-        for(var i=0;i < 4;i++){
-            if(setskill[i] === null){
-                SetSkill_name[i] = "未登録"
-            }else{
-                SetSkill_name[i] = s.skill[setskill[i]].skill_name;
+            var mi_length = s.myitem.length;
+            Cy = Math.ceil(mi_length / 2);
+            break;
+        case 6:
+            Cm = SkillMenu;      Cx = 2; Cy = 1; 
+            break;
+        case 61:
+            Cm = random_skill; Cx = 2; Cy = 3;
+            break;
+        case 61.5:
+            var SetSkill_name = [];
+            var s_row = 0;
+            for(var i=1;i <= 4;i++){
+                const desiredRow = s.myskill.find(row => row.skill_set === i )
+                if(desiredRow != undefined){
+                    s_row = desiredRow.skill_id;
+                    s.skill[s_row - 1].skill_name;
+                    SetSkill_name[i-1] = s.skill[s_row - 1].skill_name;
+                }else{
+                    SetSkill_name[i-1] = "未設定";
+                }
             }
-        }
-        Cm = SetSkill_name; Cx = 2; Cy = 2;
-    }
-    else if(mPhase == 62.5){
-        Cm = s.myskill; Cx = 2;
+            Cm = SetSkill_name; Cx = 2; Cy = 2;
+            break;
+        case 62.5:
+            Cm = s.myskill; Cx = 2;
 
-        var ms_length = s.myskill.length;
-        Cy = Math.ceil(ms_length / 2);
-    }
-    else if(mPhase == 7){
-        Cm = s.monster; Cx = 1;
+            var ms_length = s.myskill.length;
+            Cy = Math.ceil(ms_length / 2);
+            break;
+        case 7:
+            Cm = s.monster; Cx = 1;
 
-        var dm_length = s.monster.length;
-        Cy = Math.ceil(dm_length / 2);
-    }
-    else if(mPhase == 71){
-        Cm = ChoiceMenu;      Cx = 2; Cy = 1;
-    }
-    else if(mPhase == 8){
-        Cm = ChoiceMenu;      Cx = 2; Cy = 1;
+            var dm_length = s.monster.length;
+            Cy = Math.ceil(dm_length / 2);
+            break;
+        case 71:
+            Cm = ChoiceMenu;      Cx = 2; Cy = 1;
+            break;
+        case 8:
+            Cm = ChoiceMenu;      Cx = 2; Cy = 1;
+            break;
     }
     return {
         Cm,Cx,Cy
@@ -237,7 +259,9 @@ function GetMenu(){
 function DrawStatus(g)
 {
     g.fillStyle = WNDSTYLE;         // ウインドウの色
-    g.fillRect(WIDTH - WIDTH/4, HEIGHT/8, WIDTH/4.1, HEIGHT/2.8);     // 短形描画
+    //g.fillRect(WIDTH - WIDTH/4, HEIGHT/8, WIDTH/4.1, HEIGHT/2.8);     // 短形描画
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH - WIDTH/4, HEIGHT/8, WIDTH/4.1, HEIGHT/2.8);
+
 
     g.font = FONT;  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定
@@ -254,7 +278,8 @@ function DrawStatus(g)
 function DrawG(g)
 {
     g.fillStyle = WNDSTYLE;
-    g.fillRect(WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/6.3);   //所持金を描画するウインドウ
+    //g.fillRect(WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/6.3);   //所持金を描画するウインドウ
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH - WIDTH/4, HEIGHT/2, WIDTH/4.1, HEIGHT/6.3);
 
     g.font = FONT;                                  // 文字フォントを設定
     g.fillStyle = FONTSTYLE                         // 文字色を設定  
@@ -267,7 +292,9 @@ function DrawG(g)
 function ResetWND(g)
 {
     g.fillStyle = WNDSTYLE;
-    g.fillRect(WIDTH/80, HEIGHT / 2 + HEIGHT/5.4 ,WIDTH/1.37 , WIDTH/3.3);     // 短形描画
+    //g.fillRect(WIDTH/80, HEIGHT / 2 + HEIGHT/5.4 ,WIDTH/1.37 , WIDTH/3.3);     // 短形描画
+
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH/80 ,HEIGHT / 2 + HEIGHT/5.4,WIDTH/1.37,HEIGHT/3.3);
 }
 
 //メニュー画面を描画する関数
@@ -301,33 +328,36 @@ g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT /
 }
 
 function ItemText(){
-    if(mPhase == 4){
-        SetText("何を購入しますか？",s.item[Cursor-1].item_name,s.item[Cursor-1].item_text)
-    }
-    else if(mPhase == 5){
-        if(s.myitem.length > 0){
-            SetText("どのアイテムを使いますか？",s.myitem[Cursor-1].item_name,s.myitem[Cursor-1].item_text);
-        }else{
-            SetText("アイテムを持っていなかった！","お店にアイテムを買いに行こう！",""); 
-        }
-    }
-    else if(mPhase == 61){
-        SetText("どの特技を習得しますか？",s.skill[Cursor-1].skill_name,s.skill[Cursor-1].skill_text);
-    }
-    else if(mPhase == 62.5){
-        if(s.myskill.length > 0){
-        SetText("どのスキルをセットしますか？",s.skill[s.myskill[0].skill_id - 1].skill_name,s.skill[s.myskill[0].skill_id].skill_text);
-        }else{
-        SetText("セットできるスキルが無い！！","","");
-        }
-    }
-    else if(mPhase == 7){
-        SetText("どのモンスターに進化しますか？",s.monster[Cursor-1].monster_name,s.monster[Cursor-1].monster_text);
+    switch(mPhase){
+        case 4:
+            SetText("何を購入しますか？",s.item[Cursor-1].item_name,s.item[Cursor-1].item_text)
+            break;
+        case 5:
+            if(s.myitem.length > 0){
+                SetText("どのアイテムを使いますか？",s.myitem[Cursor-1].item_name,s.myitem[Cursor-1].item_text);
+            }else{
+                SetText("アイテムを持っていなかった！","お店にアイテムを買いに行こう！",""); 
+            }
+            break;
+        case 61:
+            SetText("どの特技を習得しますか？",s.skill[Cursor-1].skill_name,s.skill[Cursor-1].skill_text);
+            break;
+        case 62.5:
+            if(s.myskill.length > 0){
+                SetText("どのスキルをセットしますか？",s.skill[s.myskill[0].skill_id - 1].skill_name,s.skill[s.myskill[0].skill_id].skill_text);
+            }else{
+                SetText("セットできるスキルが無い！！","","");
+            }
+            break;
+        case 7:
+            SetText("どのモンスターに進化しますか？",s.monster[Cursor-1].monster_name,s.monster[Cursor-1].monster_text);
+            break;
     }
 }
 
 function DrawShopMenu(g){
-    g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    //g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
     g.font = FONT; g.fillStyle = FONTSTYLE;
 
     let Menu = GetMenu();
@@ -344,7 +374,7 @@ function DrawShopMenu(g){
             s.myskill.forEach(function(ms){
                 if(ms.skill_id === buy.skill_id){
                     price = buy.skill_price;
-                    price = "習得済み";
+                    price = "済";
                     S_count += 1
                 }
             });
@@ -354,14 +384,14 @@ function DrawShopMenu(g){
         }else if(mPhase === 62.5){
             
         }
-        g.fillText(`　${name}:${price}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
+        g.fillText(`　${name}:${price}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 40 + HEIGHT /11.5 * (y+1));
         x = x + 1;
         if (x >= Menu.Cx) {
             x = 0;
             y++;
         }
     });
-    g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
+    g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 40 + HEIGHT /11.5 * (gCursorY + 1));
 }
 
 //ショップ画面での購入処理を行う関数
@@ -377,17 +407,17 @@ function Shop()
         
             var id = 0
             if (s.myitem.length > 0){
-            for(var i=0; s.myitem.length > i; i++){
-            if(s.myitem[i].item_id == s.item[buy_Item].item_id){
-                s.myitem[i].item_number++,
-                id++;
+                for(var i=0; s.myitem.length > i; i++){
+                    if(s.myitem[i].item_id == s.item[buy_Item].item_id){
+                        s.myitem[i].item_number++,
+                    id++;
 
-                break;
+                    break;
+                }
             }
-        }
-    }           
-    if(id === 0){
-        s.myitem.push(
+        }           
+        if(id === 0){
+            s.myitem.push(
             {  
                 item_id      : s.item[buy_Item].item_id,
                 item_number  : 1,
@@ -409,25 +439,30 @@ function SkillShop()
 {
     const buy_Skill = Cursor - 1;
 
-    const selectedSkill = s.skill[buy_Skill].skill_name;
-    const skillprice    = s.skill[buy_Skill].skill_price;
+    const selectedSkill = random_skill[buy_Skill].skill_name;
+    const skillprice    = random_skill[buy_Skill].skill_price;
 
-        console.log("商品名："+ selectedSkill +"　値段："+ skillprice)
+    console.log("商品名："+ selectedSkill +"　値段："+ skillprice)
+    const s_check = s.myskill.find(row => row.skill_id === random_skill[buy_Skill].skill_id);
+    if(s_check === undefined){
         if(s.state[0].my_gold >= skillprice){
-        s.myskill.push(
+            s.myskill.push(
             {
-                skill_id      : s.skill[buy_Skill].skill_id,
-                skill_name    : s.skill[buy_Skill].skill_name,
-                skill_effect  : s.skill[buy_Skill].skill_effect,
-                skill_price   : s.skill[buy_Skill].skill_price,
-                skill_text    : s.skill[buy_Skill].skill_text  
+                skill_id      : random_skill[buy_Skill].skill_id,
+                skill_name    : random_skill[buy_Skill].skill_name,
+                skill_effect  : random_skill[buy_Skill].skill_effect,
+                skill_price   : random_skill[buy_Skill].skill_price,
+                skill_text    : random_skill[buy_Skill].skill_text  
             })
-    console.log(s.myskill);
-
-    s.state[0].my_gold -= skillprice;
-        SetText("また来るがよい","","");
+            console.log(s.myskill);
+    
+            random_skill[0].my_gold -= skillprice;
+            SetText("また来るがよい","","");
+        }else{
+            SetText("お金が足りないみたいだ…","","");
+        }
     }else{
-        SetText("お金が足りないみたいだ…","","");
+        SetText("もうそのスキルは習得済みだ","","");
     }
 }
 
@@ -435,7 +470,9 @@ function SkillShop()
 function ItemCheck(g){
 
     g.fillStyle = WNDSTYLE;
-    g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    //g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    
 
     let x = 0;let y = 0;
 
@@ -447,13 +484,13 @@ function ItemCheck(g){
 
     s.myitem.forEach(function(myitem){
 
-        g.fillText(`　${myitem.item_name}:${myitem.item_number}個`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
+        g.fillText(`　${myitem.item_name}:${myitem.item_number}個`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 40 + HEIGHT /11.5 * (y+1));
 
         x = x + 1;
         if (x >= Menu.Cx) {
             x = 0; y++;
         }
-        g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
+        g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 40 + HEIGHT /11.5 * (gCursorY + 1));
     })
 }
 
@@ -469,19 +506,22 @@ function Use_Item(){
 
 function DrawSetSkill(g){
     g.fillStyle = WNDSTYLE;
-    g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
-
+    //g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
     let x = 0;let y = 0;
+    let z = 0
 
     ItemText();
 
-    g.font = FONT; g.fillStyle = FONTSTYLE                    
+    g.font = FONT; g.fillStyle = FONTSTYLE
 
     let Menu = GetMenu();
 
     s.myskill.forEach(function(myskill){
+        
+        //g.fillText(`　${s.skill[myskill.skill_id].skill_name}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
 
-        g.fillText(`　${s.skill[myskill.skill_id - 1].skill_name}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
+        g.fillText(`　${s.skill[myskill.skill_id-1].skill_name}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
 
         x = x + 1;
         if (x >= Menu.Cx) {
@@ -492,10 +532,19 @@ function DrawSetSkill(g){
 }
 
 function SetSkill(){
+
     if(s.myskill.length > 0){
-    setskill[SkillCursor - 1] = s.myskill[Cursor-1].skill_id - 1;
+        const a = s.myskill.find(row => row.skill_set === SkillCursor);
+        console.log(s.myskill);
+        console.log(a);
+            if (a != undefined && a != null){
+                const a_index = s.myskill.indexOf(a);
+                console.log(a_index); // 0
+
+                s.myskill[a_index].skill_set = 0;
+            }
+                s.myskill[Cursor-1].skill_set = SkillCursor
     console.log(SkillCursor)
-    console.log(setskill)
     }
 }
 
@@ -536,7 +585,7 @@ function Drawgrowth(Cursor)
                 befor_state = s.state[0][state_point[Cursor-1]];
                 s.state[0][state_point[Cursor-1]] += chenge;
                 after_state = s.state[0][state_point[Cursor-1]];
-                s.state[0].day++;
+                daypuls(1);
                 DrawLife(-10);
                 ChangePhase(11);
             }
@@ -562,7 +611,7 @@ function Drawgrowth(Cursor)
             befor_state = s.state[0].my_gold;
             s.state[0].my_gold += chenge;
             befor_state = s.state[0].my_gold;
-            s.state[0].day++;
+            daypuls(1);
             ChangePhase(21); 
         }
     if(mPhase == 3){
@@ -577,21 +626,22 @@ function Drawgrowth(Cursor)
             restMessage = "200Gを失った…";
             CGold = -200;
         } else if (Cursor === 3) {
-            chenge = (random == "1") ? 100 : (random == "2") ? 50: (random == "3") ?  40 : 30 ;
+            chenge = (random == "1") ? 100 : (random == "2") ? 60: (random == "3") ?  40 : 30 ;
             restMessage = "500Gを失った…";
             CGold = -500;
         }
         SetText(s.monster[s.state[0].monster_id - 1].monster_name+"はしっかりと休んだ！",s.monster[s.state[0].monster_id - 1].monster_name+"のスタミナが"+chenge+"回復した",restMessage);
         DrawLife(chenge);
         s.state[0].my_gold += CGold;
-        s.state[0].day++;
+        daypuls(1);
         ChangePhase(31); 
     }
 }
 
 function DrawEvolution(g){
 
-    g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    //g.fillRect(WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH / 70,HEIGHT / 70,WIDTH - WIDTH /3.5,HEIGHT/1.52);
     g.font = FONT; g.fillStyle = FONTSTYLE;
 
     let Menu = GetMenu();
@@ -602,14 +652,14 @@ function DrawEvolution(g){
 
             name = dm.monster_name;
 
-        g.fillText(`　${name}:${dm.need_hp}　${dm.need_atk}　${dm.need_def}　${dm.need_agi}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 700 + HEIGHT /11.5 * (y+1));
+        g.fillText(`　${name}:${dm.need_hp}　${dm.need_atk}　${dm.need_def}　${dm.need_agi}`, WIDTH / 28 + (WIDTH/1.2 / Menu.Cx)* (x * 0.8), HEIGHT / 40 + HEIGHT /11.5 * (y+1));
         x = x + 1;
         if (x >= Menu.Cx) {
             x = 0;
             y++;
         }
     });
-    g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 700 + HEIGHT /11.5 * (gCursorY + 1));
+    g.fillText("⇒", WIDTH / 28 +(WIDTH / 1.2 / Menu.Cx) * gCursorX * 0.8, HEIGHT / 40 + HEIGHT /11.5 * (gCursorY + 1));
 }
 
 function Evolution(){
@@ -626,6 +676,7 @@ function Evolution(){
     if(shortage === 0){
         //s.state[0].monster_id = s.monster[Cursor-1].monster_id
         evolution_monster = Cursor-1
+        console.log(evolution_monster);
         ChangePhase(71);
     }else{
         SetText("まだ能力が足りないみたいだ","","");
@@ -674,36 +725,39 @@ function moovMonster(){
 //モンスターを描画する関数
 function DrawMonster(g){
 
-    LoadImage();
-
     g.drawImage(gImgMonster,32 * Monster_number,0, M_WIDTH , M_HEIGHT 
     ,now_placeX ,now_placeY,
     WIDTH/3,HEIGHT/3);
+    
     moovMonster();
-        
+            
     g.fillStyle = WNDSTYLE;                             // ウインドウの色
-    g.fillRect(WIDTH/80,HEIGHT/80,WIDTH/7,65);          //日数を表記するウインドウ
-    
     g.fillRect(now_placeX + WIDTH / 39 ,now_placeY-WIDTH/200,WIDTH/3.5,HEIGHT/45); //ライフバー（黒）を表記するウインドウ
-    
-    g.font = FONT;  // 文字フォントを設定
-    g.fillStyle = FONTSTYLE                         // 文字色を設定
-    g.fillText(s.state[0].day + "日目",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
     
     DrawLife(0);
     
     g.fillStyle = "rgba(255,30,30,1)";
     g.fillRect(now_placeX + WIDTH / 35.5,now_placeY-WIDTH/300,(WIDTH/3.55)/100 * s.state[0].life,HEIGHT/53);    //ライフバー（赤）を表記するウインドウ
+
+    g.fillStyle = WNDSTYLE;                             // ウインドウの色
+    //g.fillRect(WIDTH/80,HEIGHT/80,WIDTH/7,65);          //日数を表記するウインドウ
+
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH/80,HEIGHT/80,WIDTH/7,65);
+    g.font = FONT;  // 文字フォントを設定
+    g.fillStyle = FONTSTYLE                         // 文字色を設定
+    g.fillText(s.state[0].day + "日目",WIDTH/27,HEIGHT / 18)   // 日数を表記するテキスト
+
 }
 
 function DEMonster(g){
-    LoadImage();
 
-    g.drawImage(gImgEMonster,32,0, M_WIDTH , M_HEIGHT 
-    ,WIDTH / 2 ,HEIGHT / 2,
-    WIDTH,HEIGHT);
-
-    console.log("a");
+    g.fillStyle = WNDSTYLE;
+    //g.fillRect(WIDTH / 6,HEIGHT/6,WIDTH/2,HEIGHT/2,100);
+    g.drawImage(gImgWindow,0,0, 1568 , 564 ,WIDTH / 6,HEIGHT/6,WIDTH/2,HEIGHT/2,100);
+    
+    g.drawImage(gImgEMonster,32* Monster_number,0, M_WIDTH , M_HEIGHT 
+        ,WIDTH / 4 ,HEIGHT / 4,
+        WIDTH/3,HEIGHT/3);
 }
 
 //モンスターのライフバーを描画する関数
@@ -726,74 +780,101 @@ function NowCursor(){
     var Menu = GetMenu();
     Cursor = (gCursorY == 0) ? gCursorX + 1 :gCursorY * Menu.Cx + gCursorX+1;
 
-    console.log("X="+gCursorX+"：Y="+gCursorY+"：Cursor="+Cursor);
+    //console.log("X="+gCursorX+"：Y="+gCursorY+"：Cursor="+Cursor);
+}
+
+function daypuls(change_day){
+    s.state[0].day += change_day
+
+    random_skill = []
+
+    while (random_skill.length < 5 && s.skill.length > 0) {
+        const r_index = Math.floor(Math.random() * s.skill.length);
+        
+        if(!random_skill.includes(s.skill[r_index])){
+            random_skill.push(s.skill[r_index]);
+        }
+      }
+    console.log(random_skill)
 }
 
 //ホーム画面を描写する関数
 function DrawHome(g)
 {
+    LoadImage();
+
     audio.play();
+
     g.fillStyle = "#F0E68C";								//	背景色
 	g.fillRect( 0, 0, WIDTH, HEIGHT );                      //  背景設定
+    //g.drawImage(gImgMWindow,0,0, 640 , 224 ,0, 0, WIDTH, HEIGHT);
+
+
     ResetWND(g);
 
     g.fillStyle = MWNDSTYLE;                            
     g.fillRect(0,0,WIDTH - WIDTH /3.9,HEIGHT/1.52);         //モンスターウインドウ
+    g.drawImage(gImgHaikei,0,0, 564 , 423 ,0,0,WIDTH - WIDTH /3.9,HEIGHT/1.52);
 
     DrawMonster(g);                                         //モンスターを描画する関数
     DrawStatus(g);                                          //ステータスウインドウを描画する関数
 
     g.fillStyle = WNDSTYLE
 
-    if(mPhase == 0){
+    switch(mPhase){
+    case 0:
         DrawMenu(g);                                        //セレクトメニュー画面を描画する
         SetText("今日は何をしますか？","","");
-    }
-    if(mPhase == 1){
+        break;
+    case 1:
         DrawMenu(g);                                        //トレーニングメニュー画面を描画する
         SetText("どの能力を鍛えますか？","","");
-    }
-    if(mPhase == 2){
+        break;
+    case 2:
         DrawMenu(g)        
         SetText("何の仕事をしますか？","","");
-    }
-    if(mPhase == 3){                                        //休んだ際の処理を行う
+        break;
+    case 3:                                        //休んだ際の処理を行う
         DrawMenu(g)        
         SetText("どうやって休みますか？","","");
-    }
-    if(mPhase == 4){                                        //買い物をした際の処理を行う
+        break;
+    case 4:                                        //買い物をした際の処理を行う
         DrawShopMenu(g);
-    }
-    if(mPhase == 5){                                        //アイテムを確認する処理を行う
+        break;
+    case 5:                                        //アイテムを確認する処理を行う
         ItemCheck(g);
-    }
-    if(mPhase == 6){
+        break;
+    case 6:
         DrawMenu(g);
-        SetText("どちらにしますか？","",""); 
-    }
-    if(mPhase == 61){
+        SetText("どちらにしますか？","","");
+        break; 
+    case 61:
         DrawShopMenu(g);
-    }
-    if(mPhase == 61.5){
+        break;
+    case 61.5:
         DrawMenu(g);
         SetText("どのスキルを変更しますか？","","");
-    }
-    if(mPhase == 62.5){
+        break;
+    case 62.5:
         DrawSetSkill(g);
-    }
-    if(mPhase == 7){
+        break;
+    case 7:    
         DrawEvolution(g);
-    }
-    if(mPhase == 71){
-        DEMonster(g);        DrawMenu(g);
+        break;
+    case 71:
+        DrawMenu(g); DEMonster(g); 
         SetText("本当に進化させますか？","","");
-    }
-    if(mPhase == 8){
+        break;
+    //if(mPhase == 72){
+        //ColorChange(g);
+    //}
+    case 8:
         DrawMenu(g);
-        SetText("今の状況をセーブしますか？","",""); 
-    }
-    if(mPhase == 9){                                        //体力がなくなった際の処理を行う
+        SetText("今の状況をセーブしますか？","","");
+        break; 
+    case 9://体力がなくなった際の処理を行う
         SetText("モンスターの体力が無くなってしまった！","モンスターの能力が下がった。","回復の為に三日間休んだ。")
+        break;
     }
 
     DrawG(g);                                               //所持ゴールドウインドウを描画する関数
@@ -836,6 +917,15 @@ function WmSize()
     } else {
         gWidth = gHeight * WIDTH / HEIGHT;
     }
+
+    const offsetX = (window.innerWidth - gWidth) / 2;
+    const offsetY = (window.innerHeight - gHeight) / 2;
+    ca.style.position = "absolute";
+    ca.style.left = offsetX + "px";
+    ca.style.top = offsetY + "px";
+
+    document.body.style.overflowX = "hidden";
+    document.body.style.overflowY = "hidden";
 }
 
 function WmTimer()
@@ -857,16 +947,15 @@ window.onkeydown = function (ev) {
     if (gIsKeyDown[c]) {    // 既にキーが押されている場合は処理しない
         return;
     }
+
     gIsKeyDown[c] = true;
 
     const Menu = GetMenu();
-    var length = Object.keys(Menu.Cm).length + 1;
-
+    var length = Object.keys(Menu.Cm).length;
 
     // キーボードの右キーが押された場合
     if (c === 39) {
         // gCursorXが最大値に達していない場合に1増やす
-
 
         if (gCursorX < Menu.Cx - 1) {
             gCursorX++;
@@ -875,7 +964,7 @@ window.onkeydown = function (ev) {
             gCursorY++;
             gCursorX = 0;
         }
-        if(length-2 <  Menu.Cx * gCursorY + (gCursorX)){
+        if(length-1 <  Menu.Cx * gCursorY + (gCursorX)){
             gCursorX = 0;
             gCursorY = 0;
         }
@@ -886,22 +975,26 @@ window.onkeydown = function (ev) {
         if (gCursorX > 0) {
             gCursorX--;
         }
-        else if(gCursorY != 0){
+        else if(gCursorY > 0){
             gCursorY--;
             gCursorX = Menu.Cx - 1;
         }else{
             gCursorY = Menu.Cy - 1
-            if(Menu.Cy != 1){
-                gCursorX = length % Menu.Cy;
+            if(Menu.Cy > 1){
+                gCursorX = (length % (Menu.Cy - 1) == 0 ) ? Menu.Cy - 1  : length % Menu.Cy - 1;
             }else{
                 gCursorX = Menu.Cx - 1
             }
         }
     }
+    console.log(length)
+    console.log(Menu.Cy)
+    console.log("X = "+gCursorX+" : Y = "+gCursorY);
     NowCursor();
 }
 
 function ChangePhase(m){
+    befor_Phase = mPhase
     mPhase = m;
     gCursorX = 0;
     gCursorY = 0;
@@ -984,11 +1077,18 @@ window.onkeyup = function (ev) {
             if(Cursor == 1){
                 s.state[0].monster_id = s.monster[evolution_monster].monster_id
                 console.log(s.state[0].monster_id);
+                setInterval(M_moov, 600); 
                 ChangePhase(0)
             }else{
                 ChangePhase(0)    
             }
         }
+        /*else if(mPhase == 72){
+            if(change_ok == 1){
+                change_ok == 0
+                ChangePhase(0)
+            }
+        }*/
         else if(mPhase == 71.5){
             ChangePhase(0);
         }
@@ -1005,12 +1105,18 @@ window.onkeyup = function (ev) {
             s.state[0].atk  =  Math.floor(s.state[0].atk * 0.8);
             s.state[0].def  =  Math.floor(s.state[0].def * 0.8);
             s.state[0].agi  =  Math.floor(s.state[0].agi * 0.8);
-            s.state[0].day  =  s.state[0].day + 3;
+            daypuls(3);
 
             s.state[0].life =  50;
 
             ChangePhase(0);
             return;
+        }
+    }
+
+    if(c == 88 ||  c == 96){
+        if(mPhase != 0){
+            mPhase = befor_Phase
         }
     }
 }
