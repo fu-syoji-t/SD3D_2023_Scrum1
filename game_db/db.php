@@ -87,6 +87,12 @@ if($receivedFunction === "myskill"){
     encode($result);
 }
 
+if($receivedFunction === "enemyskill"){
+    $query = "SELECT * FROM skill INNER JOIN enemy_skill ON skill.skill_id = enemy_skill.skill_id";
+    $result = $dbConnection->query($query); 
+    encode($result);
+}
+
 
 
 if($receivedFunction === "save_item"){
