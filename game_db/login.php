@@ -22,6 +22,13 @@ try {
     $query->execute([$user]);
     $userData = $query->fetch();
 
+    // メールアドレスの検証
+if (!filter_var($user, FILTER_VALIDATE_EMAIL)) {
+    // 無効なメールアドレス
+    $error_message = "メールアドレスまたはパスワードが一致しません。";
+    header('Location:ログイン.php?error=' . urlencode($error_message));
+    exit();
+}
 
     // パスワードの検証
     if ($userData['pass'] == password_verify($pass, $userData['pass'])) {
